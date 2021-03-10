@@ -634,4 +634,4 @@ if True:
     # Plotting the perpendiculars
     plot_geometry_perpendiculars(ax, geometry1)
 
-    fig.show
+    fig.show()
