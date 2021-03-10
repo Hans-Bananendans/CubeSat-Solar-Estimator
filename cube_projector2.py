@@ -14,34 +14,41 @@ from numpy import sin, cos
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as mp3d
 
+
 def r2d(a):
     """Convert radians to degrees."""
-    return a*180/np.pi
+    return a * 180 / np.pi
+
 
 def d2r(a):
     """Convert degrees to radians."""
-    return a*np.pi/180
+    return a * np.pi / 180
 
-adeg = 0   # Rotation around x axis in degrees
-bdeg = 0   # Rotation around y axis in degrees
-cdeg = 0  # Rotation around z axis in degrees
+
+""" CHANGE ROTATION OF BODY HERE: """
+# Note: choosing bdeg=90 will result in gimbal lock. 
+adeg = 30  # Rotation around x axis in degrees
+bdeg = 45  # Rotation around y axis in degrees
+cdeg = 0   # Rotation around z axis in degrees
 
 a = d2r(adeg)
 b = d2r(bdeg)
 c = d2r(cdeg)
 
-class Vertex():
+
+class Vertex:
     """Custom implentation of a 3D point expressed in cartesians."""
-    def __init__(self, x=0, y=0, z=0):
+
+    def __init__(self, x=0., y=0., z=0.):
         self.x = x
         self.y = y
         self.z = z
-        
-    def translate(self, dx=0, dy=0, dz=0):
+
+    def translate(self, dx=0., dy=0., dz=0.):
         self.x += dx
         self.y += dy
         self.z += dz
-    
+
     def rotate_origin(self, a, b, c, seq='321'):
         """ Rotates the vertex around the origin.
             a is Euler angle of rotation around x, etc...
@@ -49,19 +56,19 @@ class Vertex():
             seq is a string with the rotation sequence, e.g. '321' for:
                 Rz(c).Ry(b).Rx(a).vertex
         """
-        
-        Rx = np.array([[1,      0,       0], 
-                       [0, cos(a), -sin(a)],
-                       [0, sin(a),  cos(a)]])
 
-        Ry = np.array([[ cos(b), 0, sin(b)], 
-                       [      0, 1,      0],
+        Rx = np.array([[1, 0, 0],
+                       [0, cos(a), -sin(a)],
+                       [0, sin(a), cos(a)]])
+
+        Ry = np.array([[cos(b), 0, sin(b)],
+                       [0, 1, 0],
                        [-sin(b), 0, cos(b)]])
-        
-        Rz = np.array([[cos(c), -sin(c), 0], 
-                       [sin(c),  cos(c), 0],
-                       [     0,       0, 1]])
-        
+
+        Rz = np.array([[cos(c), -sin(c), 0],
+                       [sin(c), cos(c), 0],
+                       [0, 0, 1]])
+
         for axis in reversed(seq):
             if axis == '1':
                 newcoor = np.dot(Rx, np.array([self.x, self.y, self.z]))
@@ -80,22 +87,22 @@ class Vertex():
             cor is the centre of rotation, which MUST be specified as
                 a vertex.
         """
-        
-        Rx = np.array([[1,      0,       0], 
-                       [0, cos(a), -sin(a)],
-                       [0, sin(a),  cos(a)]])
 
-        Ry = np.array([[ cos(b), 0, sin(b)], 
-                       [      0, 1,      0],
+        Rx = np.array([[1, 0, 0],
+                       [0, cos(a), -sin(a)],
+                       [0, sin(a), cos(a)]])
+
+        Ry = np.array([[cos(b), 0, sin(b)],
+                       [0, 1, 0],
                        [-sin(b), 0, cos(b)]])
-        
-        Rz = np.array([[cos(c), -sin(c), 0], 
-                       [sin(c),  cos(c), 0],
-                       [     0,       0, 1]])
-        
+
+        Rz = np.array([[cos(c), -sin(c), 0],
+                       [sin(c), cos(c), 0],
+                       [0, 0, 1]])
+
         for axis in reversed(seq):
-            self.translate(-1*cor.x, -1*cor.y, -1*cor.z)
-            
+            self.translate(-1 * cor.x, -1 * cor.y, -1 * cor.z)
+
             if axis == '1':
                 newcoor = np.dot(Rx, np.array([self.x, self.y, self.z]))
             if axis == '2':
@@ -103,42 +110,43 @@ class Vertex():
             if axis == '3':
                 newcoor = np.dot(Rz, np.array([self.x, self.y, self.z]))
             self.__init__(newcoor[0], newcoor[1], newcoor[2])
-            
-            self.translate(1*cor.x, 1*cor.y, 1*cor.z)
-    
+
+            self.translate(1 * cor.x, 1 * cor.y, 1 * cor.z)
+
     def array(self):
         """Returns vertex coordinates as a Numpy array."""
         return np.array([self.x, self.y, self.z])
-            
+
     def display(self, dec=4):
         """Print the vertex coordinates."""
         if dec == -1:  # Set dec to -1 to disable rounding
             print([self.x, self.y, self.z])
         else:
-            print([round(self.x,dec), \
-                   round(self.y,dec), \
-                   round(self.z,dec)])
+            print([round(self.x, dec),
+                   round(self.y, dec),
+                   round(self.z, dec)])
 
 
-class Line():
+class Line:
     """Unused line class."""
+
     def __init__(self, point1=None, point2=None):
         self.point1 = point1 or Vertex()
         self.point2 = point2 or Vertex()
-        
-        self.i = self.point1.x-self.point2.x
-        self.j = self.point1.y-self.point2.y
-        self.k = self.point1.z-self.point2.z
-        
-        self.length = np.sqrt(self.i*self.i + \
-                              self.j*self.j + \
-                              self.k*self.k)
-    
+
+        self.i = self.point1.x - self.point2.x
+        self.j = self.point1.y - self.point2.y
+        self.k = self.point1.z - self.point2.z
+
+        self.length = np.sqrt(self.i * self.i +
+                              self.j * self.j +
+                              self.k * self.k)
+
     def magnitude(self):
         return self.length
-    
 
-class Face():
+
+class Face:
     """Class for a quadrilateral face (4-point polygon).
     
        A face consists of four vertices that make up the corners of a plane.
@@ -150,7 +158,7 @@ class Face():
              |   |  
           1  o---o 2 
     """
-    
+
     def __init__(self, p1: Vertex, p2: Vertex, p3: Vertex, p4: Vertex):
         self.p1 = p1
         self.p2 = p2
@@ -159,13 +167,13 @@ class Face():
         if self.check_coplanarity() == False:
             raise ValueError("Error! Set of four points is not coplanar!")
         self.area = self.area()
-    
+
     def check_coplanarity(self):
         """Check if all points are coplanar, by investigating determinant
                of [p12, p13, p14]. Points are coplanar only if it is zero."""
-        plane_matrix = np.vstack((self.p2.array() - self.p1.array(), \
-                                  self.p3.array() - self.p1.array(), \
-                                  self.p4.array() - self.p1.array()  \
+        plane_matrix = np.vstack((self.p2.array() - self.p1.array(),
+                                  self.p3.array() - self.p1.array(),
+                                  self.p4.array() - self.p1.array()
                                   )).transpose()
         if round(np.linalg.det(plane_matrix), 8) == 0:
             # Rounding here happens to prevent floating point errors from
@@ -173,7 +181,7 @@ class Face():
             return True
         else:
             return False
-        
+
     def area(self):
         """Calculate area of the face, by computing the diagonals."""
         diag13 = self.p3.array() - self.p1.array()
@@ -181,7 +189,7 @@ class Face():
         cpdiag = np.cross(diag13, diag24)
         facearea = 0.5 * np.sqrt(np.einsum('...i,...i', cpdiag, cpdiag))
         return facearea
-    
+
     def project(self, plane='xy'):
         """Project a copy of the frame onto a plane that is spanned by two
            axes. The projection is orthographic.
@@ -195,20 +203,20 @@ class Face():
             elif plane == 'yz':
                 vertex.x = 0
             else:
-                raise ValueError("No valid projection plane given to " \
-                                 "projection method! " \
+                raise ValueError("No valid projection plane given to "
+                                 "projection method! "
                                  "Valid options: 'xy', 'xz', 'yz'")
         # Reinitialize the face with the projected vertices.
         pj = Face(pj.p1, pj.p2, pj.p3, pj.p4)
         return pj
-    
+
     def find_centroid(self):
         """Find the vertex centroid of the face."""
-        xc = 0.25*(self.p1.x + self.p2.x + self.p3.x + self.p4.x)
-        yc = 0.25*(self.p1.y + self.p2.y + self.p3.y + self.p4.y)
-        zc = 0.25*(self.p1.z + self.p2.z + self.p3.z + self.p4.z)
+        xc = 0.25 * (self.p1.x + self.p2.x + self.p3.x + self.p4.x)
+        yc = 0.25 * (self.p1.y + self.p2.y + self.p3.y + self.p4.y)
+        zc = 0.25 * (self.p1.z + self.p2.z + self.p3.z + self.p4.z)
         return Vertex(xc, yc, zc)
-        
+
     def find_perpendicular(self):
         """Find a vector perpendicular to a face (direction is ambiguous).
            TODO: Generalize the direction of the perpendicular vector.
@@ -218,13 +226,13 @@ class Face():
         p12 = (self.p2.array() - self.p1.array())
         p14 = (self.p4.array() - self.p1.array())
         perpendicular = np.cross(p12, p14)
-        return perpendicular/np.linalg.norm(perpendicular)
-    
+        return perpendicular / np.linalg.norm(perpendicular)
+
     def display(self):
         """Print vertices of face to console."""
         for point in [self.p1, self.p2, self.p3, self.p4]:
             point.display()
-    
+
     def plotlist(self):
         """Return three lists with the x, y, and z-components of all four
            vertices in the face."""
@@ -232,12 +240,13 @@ class Face():
         ylist = [self.p1.y, self.p2.y, self.p3.y, self.p4.y]
         zlist = [self.p1.z, self.p2.z, self.p3.z, self.p4.z]
         return xlist, ylist, zlist
-    
+
     def plotlist2(self):
         """Return a list of lists with the xyz coordinates of each vertex."""
-        grid1 = np.array([self.p1.array(), self.p2.array(), \
+        grid1 = np.array([self.p1.array(), self.p2.array(),
                           self.p3.array(), self.p4.array()])
         return grid1.tolist()
+
 
 class Geometry():
     """In this code, a Geometry is defined as a loose collection of Faces.
@@ -248,26 +257,26 @@ class Geometry():
        others interact instead with the individual Vertices out of which
        the Faces are made, to avoid e.g. applying transformations more than
        once to the same Vertex object."""
-       
+
     def __init__(self):
         """Creates an empty list that can be filled with faces."""
         self.faces = []
-    
+
     def add_face(self, face):
         """Add a singular face to the geometry"""
         self.faces.append(face)
-    
+
     def add_faces(self, faces):
         """Add a list of faces to the geometry"""
         for face in faces:
             self.faces.append(face)
-    
+
     def find_centroid(self):
         """Locate the centroid of the geometry.
         
            TODO: Write the function."""
         pass
-    
+
     def find_centroids(self, returnarray=False):
         """Returns a list of the centroid coordinates of all faces currently 
            in the geometry. Technically, these are vertex centroids.
@@ -275,13 +284,13 @@ class Geometry():
            setting returnarray to True."""
         centroids = []
         for i in range(len(self.faces)):
-            if returnarray==True:
+            if returnarray == True:
                 centroids.append(self.faces[i].find_centroid().array())
             else:
                 centroids.append(self.faces[i].find_centroid())
         return centroids
-    
-    def find_perpendiculars(self, scale=1):
+
+    def find_perpendiculars(self, scale=1.):
         """Returns a list with a vector perpendicular to each face in the
            geometry. If scale=1, these vectors will be unit vectors.
             
@@ -299,13 +308,13 @@ class Geometry():
         perpendiculars = []
         for i in range(len(self.faces)):
             perp = self.faces[i].find_perpendicular()
-            perpendiculars.append(perp*scale)
-            
+            perpendiculars.append(perp * scale)
+
         # Code that ensures arrows point outwards (TODO):
         # ...
 
         return perpendiculars
-    
+
     def perpendiculars_plotlist(self):
         """Returns a list of lists with coordinates used for plotting.
            Each item in the list is a list of six coordinates:
@@ -315,10 +324,10 @@ class Geometry():
            
            TODO: Pass scaling as argument.
            """
-        c = self.find_centroids(returnarray=1)
-        p = self.find_perpendiculars(scale=0.05) # Vary 0.05 if needed.
+        c = self.find_centroids(returnarray=True)
+        p = self.find_perpendiculars(scale=0.05)  # Vary 0.05 if needed.
         if len(c) != len(p):
-            raise ValueError("Number of centroids and perpendiculars is "\
+            raise ValueError("Number of centroids and perpendiculars is "
                              "somehow unequal! This should not happen.")
         plotarray = np.hstack([np.vstack(c), np.vstack(p)]).transpose()
         return plotarray.tolist()
@@ -330,41 +339,41 @@ class Geometry():
         for face in self.faces:
             A += face.area
         return A
-    
+
     def illumination_vector(self, plane='xy'):
         """Generate an illumination vector based on a given plane.
            This vector essentially "simulates" where the light is coming from.
            Currently limited to directions parallel to global XYZ system.
            """
         if plane == 'xy':
-            iv = np.array([0,0,1])
+            iv = np.array([0, 0, 1])
         elif plane == '-xy':
-            iv = np.array([0,0,-1])
+            iv = np.array([0, 0, -1])
         elif plane == 'xz':
-            iv = np.array([0,1,0])
+            iv = np.array([0, 1, 0])
         elif plane == '-xz':
-            iv = np.array([0,-1,0])
+            iv = np.array([0, -1, 0])
         elif plane == 'yz':
-            iv = np.array([1,0,0])
+            iv = np.array([1, 0, 0])
         elif plane == '-yz':
-            iv = np.array([-1,0,0])
+            iv = np.array([-1, 0, 0])
         else:
-            raise ValueError("Invalid plane given. Options: 'xy', '-xy', " \
+            raise ValueError("Invalid plane given. Options: 'xy', '-xy', "
                              "'xz', '-xz', 'yz', '-yz'")
         return iv
-            
+
     def illuminated_faces(self, plane='xy'):
         """Computes which faces of the geometry are illuminated given
         a certain illumination vector. It returns a vector representing
         each face in the geometry. If the value is 0, the face is not
         illuminated. If it is non-zero, it represents the angle in radians
         that the respective face makes with the illumination vector."""
-        
+
         # Fetch direction of illumination and face perpendiculars.
         # Both MUST be unit vectors (and should be).
         iv = self.illumination_vector(plane=plane)
         perps = self.find_perpendiculars(scale=1)
-        
+
         # Pre-allocate illuminated_faces vector
         illuminated_faces = np.zeros(len(self.faces))
         for i in range(len(perps)):
@@ -372,22 +381,22 @@ class Geometry():
             ill_status = np.dot(iv, perps[i])
             # Face is illuminated only if ill_status < 0:
             if ill_status < 0:
-                illuminated_faces[i] = np.arccos(ill_status) - np.pi/2
+                illuminated_faces[i] = np.arccos(ill_status) - np.pi / 2
             else:
                 pass
         return illuminated_faces
-    
+
     def illuminated_area(self, plane='xy'):
         """Computes the projected area of the illuminated area.
         Requires that projection plane and illumination vector are 
         exactly perpendicular, for example:
             if projection plane is xy, then iv must be [0, 0, +1].
         Units of the area are in terms of the same units as the vectors."""
-        
+
         # Fetch projected shape and illuminated faces information:
         ill_faces = self.illuminated_faces(plane=plane)
         projection = self.project_geometry(plane=plane)
-        
+
         # Loop over illuminated faces and sum area:
         illuminated_area = 0
         for i in range(len(ill_faces)):
@@ -396,7 +405,7 @@ class Geometry():
                 # Add the area of the current projected face:
                 illuminated_area += projection.faces[i].area
         return illuminated_area
-        
+
     def project_geometry(self, plane='xy'):
         """Project a whole geometry by individually projecting each Face
            object in self.faces.
@@ -404,13 +413,13 @@ class Geometry():
         projected_faces = []
         for i in range(len(self.faces)):
             projected_faces.append(self.faces[i].project(plane=plane))
-            
+
         projected_geometry = Geometry()
         projected_geometry.add_faces(projected_faces)
         return projected_geometry
-        
 
-#%% Define body
+
+# %% Define body
 
 # # Old junk:
 # point1 = Vertex(0, 0, 0)
@@ -467,8 +476,8 @@ COR.translate(0.1, 0.1, 0.1)
 # TODO: move the circuitry for transforming vertices inside class structure.
 # Problem: How to prevent points from being transformed more than once?
 for vertex in pointcollection:
-    vertex.translate(0.1,0.1,0.1)
-    vertex.rotate(a,b,c,COR)
+    vertex.translate(0.1, 0.1, 0.1)
+    vertex.rotate(a, b, c, COR)
 
 # Define faces of Cubesat
 fA = Face(p4, p3, p2, p1)
@@ -483,127 +492,130 @@ geometry1 = Geometry()
 geometry1.add_faces([fA, fB, fC, fD, fE, fF])
 
 # Create a projection object that can be plotted later.
-geometry1xy = geometry1.project_geometry('xz')
+geometry1xy = geometry1.project_geometry('xy')
 
-
-#%% Plotting code
+# %% Plotting code
 
 # Check value for illuminated area. Because Cubesat is a cuboid, illuminated
 # area and the unilluminated area should be the same UNLESS only one side is 
 # facing the light. Used for debugging.
-A_shadow_check = round(geometry1xy.area()/2, 4)
+A_shadow_check = round(geometry1xy.area() / 2, 4)
 
 # Properly compute the illuminated area using Geometry method:
-A_shadow = round(geometry1.illuminated_area(plane='xz'), 4)
+A_shadow = round(geometry1.illuminated_area(plane='xy'), 4)
 
 print('Coarse method: A_xy =', A_shadow_check, 'm^2')
 print('Projected A_xy =', A_shadow, "m^2")
 
-
 # Toggle plotting functionality:
 if True:
-    
-    fig = plt.figure(figsize=(10,7))
+
+    fig = plt.figure(figsize=(10, 7))
     ax = mp3d.Axes3D(fig)
-    
+
     ax.set_title("Wireframe visualization, A_xy = {} m^2".format(A_shadow))
-    
+
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
     ax.view_init(elev=20, azim=-90)
-    
+
     # # Forcing aspect ratio for Axes3D object is still fucked up in
     # # matplotlib source, even after many years. :(
     # ax.set_aspect('equal')
     # ax.set_box_aspect((1,1,1))
-    
+
     ax.set_xlim(0, 0.4)
     ax.set_ylim(0, 0.4)
     ax.set_zlim(0, 0.3)
-    
+
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
-    
-    
-    def plot_xyz_tripod(axes, alpha=1, scaling=1):
+
+
+    def plot_xyz_tripod(axes, alpha=1, scaling=1.):
         """Plots an rgb xyz tripod at the global origin.
             - alpha changes the opacity of the arrows. (default: 1)
             - scaling changes the length of the arrows (default: 1)
             """
-        ax.quiver(0,0,0,scaling,0,0, \
-                  arrow_length_ratio = 0.15, color = 'red', alpha=alpha)
-        ax.quiver(0,0,0,0,scaling,0, \
-                  arrow_length_ratio = 0.15, color = 'green', alpha=alpha)
-        ax.quiver(0,0,0,0,0,scaling, \
-                  arrow_length_ratio = 0.15, color = 'blue', alpha=alpha)
-        
+        ax.quiver(0, 0, 0, scaling, 0, 0,
+                  arrow_length_ratio=0.15, color='red', alpha=alpha)
+        ax.quiver(0, 0, 0, 0, scaling, 0,
+                  arrow_length_ratio=0.15, color='green', alpha=alpha)
+        ax.quiver(0, 0, 0, 0, 0, scaling,
+                  arrow_length_ratio=0.15, color='blue', alpha=alpha)
+
+
     # Plotting the XYZ tripod
     plot_xyz_tripod(ax, scaling=0.25)
-    
+
     # Plotting the centroid of the geometry (manually)
     ax.scatter(COR.x, COR.y, COR.z, c='cyan', s=20, alpha=0.5)
-    
-    
-    def plot_face(axes, face, fill=0, alpha=0.2, \
-                  linecolour='black', linealpha=1, \
+
+
+    def plot_face(axes, face, fill=0, alpha=0.2,
+                  linecolour='black', linealpha=1,
                   illumination=False, ill_value=0):
         """ Plots an individual Face object. Check source code for kwargs.
         """
         (xlist, ylist, zlist) = face.plotlist()
-    
+
         # Plot individual vertices:
         axes.scatter(xlist, ylist, zlist, c=linecolour, s=10)
-        
+
         # Plot edges that connect vertices:
-        for i in range(-1, len(xlist)-1):
-            axes.plot3D([xlist[i], xlist[i+1]], \
-                        [ylist[i], ylist[i+1]], \
-                        [zlist[i], zlist[i+1]], \
+        for i in range(-1, len(xlist) - 1):
+            axes.plot3D([xlist[i], xlist[i + 1]],
+                        [ylist[i], ylist[i + 1]],
+                        [zlist[i], zlist[i + 1]],
                         linecolour, alpha=linealpha, lw=2)
-        
+
         # Plot the face surface:
         if fill == 1:
-                        
-            fs = mp3d.art3d.Poly3DCollection([face.plotlist2()], \
+
+            fs = mp3d.art3d.Poly3DCollection([face.plotlist2()],
                                              linewidth=0)
             # If illumination functionality is turned on, face is coloured
             # based on its illumination value.
             if illumination == True:
                 # No illumination: rgb = [0.1, 0.1, 0.1] (dark gray)
                 # Total illumination: [1, 1, 1] (white)
-                value = round(0.1 + 0.9/1.6*ill_value,2)
+                value = round(0.1 + 0.9 / 1.6 * ill_value, 2)
                 fs.set_facecolor((value, value, value, alpha))
             else:
                 fs.set_facecolor((0.1, 0.1, 0.1, alpha))
             axes.add_collection3d(fs)
-            
-    
-    def plot_geometry(axes, geometry, fill=0, alpha=0.2, \
-                      linecolour='black', linealpha=1, \
+
+
+    def plot_geometry(axes, geometry, fill=0, alpha=0.2,
+                      linecolour='black', linealpha=1,
                       illumination=False):
         """Plot geometry by individually plotting its faces. If illumination 
            is turned on, uses illuminated_faces() method to fetch which faces 
-           are illuminated, and passes this to the plot_face() function. 
+           are illuminated, and passes this to the plot_face() function.
+           
+           TODO: Allow passing of 'plane'
            """
         if illumination == True:
-            ill_faces = geometry.illuminated_faces(plane='xz')
+            ill_faces = geometry.illuminated_faces(plane='xy')
             for idx, face in enumerate(geometry.faces):
-                plot_face(axes, face, fill=fill, alpha=alpha, \
-                          linecolour=linecolour, linealpha=linealpha, \
+                plot_face(axes, face, fill=fill, alpha=alpha,
+                          linecolour=linecolour, linealpha=linealpha,
                           illumination=True, ill_value=ill_faces[idx])
         else:
             for idx, face in enumerate(geometry.faces):
-                plot_face(axes, face, fill=fill, alpha=alpha, \
+                plot_face(axes, face, fill=fill, alpha=alpha,
                           linecolour=linecolour, linealpha=linealpha)
-    
+
+
     # plot_face(ax, geometry1.faces[0], colour='black')
-    
+
     # Plot Cubesat model
-    plot_geometry(ax, geometry1, linecolour='black', fill=1, alpha=1, \
+    plot_geometry(ax, geometry1, linecolour='black', fill=1, alpha=1,
                   illumination=True)
     # Plot projection of Cubesat
     plot_geometry(ax, geometry1xy, linecolour='orange')
-    
+
+
     def plot_geometry_perpendiculars(axes, geometry, colour='gray', alpha=0.5):
         """Plots the normals/perpendiculars of each face in a geometry, and 
            displays them as little gray arrows.
@@ -612,25 +624,25 @@ if True:
         xc = []
         yc = []
         zc = []
-        
+
         centroids = geometry.find_centroids()
-        
+
         for vertex in centroids:
             xc.append(vertex.x)
             yc.append(vertex.y)
             zc.append(vertex.z)
         axes.scatter(xc, yc, zc, c=colour, s=5, alpha=alpha)
-        
+
         # Then, attach plane-perpendicular arrows to the centroids:
         xyzuvw = geometry.perpendiculars_plotlist()
-        ax.quiver(xyzuvw[0][:], xyzuvw[1][:], xyzuvw[2][:], \
-                  xyzuvw[3][:], xyzuvw[4][:], xyzuvw[5][:], \
-                  color = colour, alpha=alpha)
+        ax.quiver(xyzuvw[0][:], xyzuvw[1][:], xyzuvw[2][:],
+                  xyzuvw[3][:], xyzuvw[4][:], xyzuvw[5][:],
+                  color=colour, alpha=alpha)
 
-        
+
     # Highlight one of the faces in bright yellow (useful for debugging)
     # plot_face(ax, geometry1.faces[5], colour='yellow')    
-        
+
     # Plotting the perpendiculars
     plot_geometry_perpendiculars(ax, geometry1)
 
