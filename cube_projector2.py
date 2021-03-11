@@ -28,11 +28,14 @@ def d2r(a):
     return a * np.pi / 180
 
 
-""" CHANGE ROTATION OF BODY HERE: """
+""" === CHANGE ROTATION OF BODY HERE === """
+
 # Note: choosing bdeg=90 will result in gimbal lock. 
 adeg = 0  # Rotation around x axis in degrees
 bdeg = 0  # Rotation around y axis in degrees
 cdeg = 0   # Rotation around z axis in degrees
+
+""" ==================================== """
 
 a = d2r(adeg)
 b = d2r(bdeg)
@@ -295,6 +298,71 @@ class Geometry():
            TODO: Write the function."""
         pass
 
+    def find_cuboid_centroid(self):
+        """Locate the centroid of a cuboid geometry.
+           Cuboids have eight corners, which this method checks first.
+           """
+        vertices = self.vertices()
+        if len(vertices) != 8:
+            raise ValueError("Tried to use method find_cuboid_centroid() "
+                             "with a geometry containing {} vertices. "
+                             "All cuboids must have exactly 8 vertices."
+                             "".format(len(vertices)))
+        xc = 0
+        yc = 0
+        zc = 0
+        for vertex in vertices:
+            xc += vertex.x/len(vertices)
+            yc += vertex.y/len(vertices)
+            zc += vertex.z/len(vertices)
+        return Vertex(xc, yc, zc)
+
+    def translate(self, dx=0., dy=0., dz=0.):
+        """Translate all the vertices in the geometry."""
+        vertices = self.vertices()
+        for vertex in vertices:
+            vertex.translate(dx=dx, dy=dy, dz=dz)
+    
+    def rotate_origin(self, a, b, c, seq='321'):
+        """Rotate all the vertices in the geometry around the origin.
+           a is Euler angle of rotation around x, etc...
+               expressed in radians
+           seq is a string with the rotation sequence, e.g. '321' for:
+               Rz(c).Ry(b).Rx(a).vertex
+           """
+        vertices = self.vertices()
+        for vertex in vertices:
+            vertex.rotate_origin(a=a, b=b, c=c, seq=seq)
+    
+    def rotate(self, a, b, c, cor, seq='321'):
+        """Rotate all the vertices in the geometry around a point in space.
+           a is Euler angle of rotation around x, etc...
+               expressed in radians
+           seq is a string with the rotation sequence, e.g. '321' for:
+               Rz(c).Ry(b).Rx(a).vertex
+           cor is the centre of rotation, which MUST be specified as
+               a vertex.
+           """
+        vertices = self.vertices()
+        for vertex in vertices:
+            vertex.rotate(a=a, b=b, c=c, cor=cor, seq=seq)
+        
+    def rotate_cuboid_centroid(self, a, b, c, seq='321'):
+        """Rotate all the vertices in the geometry around its cuboid centroid.
+           WARNING: Only works if the geometry is a valid cuboid.
+           
+           a is Euler angle of rotation around x, etc...
+               expressed in radians
+           seq is a string with the rotation sequence, e.g. '321' for:
+               Rz(c).Ry(b).Rx(a).vertex
+           cor is the centre of rotation, which MUST be specified as
+               a vertex.
+           """
+        centroid = self.find_cuboid_centroid()
+        vertices = self.vertices()
+        for vertex in vertices:
+            vertex.rotate(a=a, b=b, c=c, cor=centroid, seq=seq)
+
     def find_centroids(self, returnarray=False):
         """Returns a list of the centroid coordinates of all faces currently 
            in the geometry. Technically, these are vertex centroids.
@@ -435,6 +503,11 @@ class Geometry():
         projected_geometry = Geometry()
         projected_geometry.add_faces(projected_faces)
         return projected_geometry
+    
+    def readout(self):
+        """Print the vertices in in the geometry to console."""
+        for vertex in self.vertices():
+            vertex.readout()
 
 
 # %% Define body
