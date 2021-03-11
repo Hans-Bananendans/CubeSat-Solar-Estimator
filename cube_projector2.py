@@ -6,6 +6,9 @@ Created on Thu Mar 4 15:02:11 2021
 
 Version: 1.0
 
+TODO: Make translation and rotation member functions of geometry.
+
+
 """
 
 from copy import deepcopy
@@ -27,8 +30,8 @@ def d2r(a):
 
 """ CHANGE ROTATION OF BODY HERE: """
 # Note: choosing bdeg=90 will result in gimbal lock. 
-adeg = 30  # Rotation around x axis in degrees
-bdeg = 45  # Rotation around y axis in degrees
+adeg = 0  # Rotation around x axis in degrees
+bdeg = 0  # Rotation around y axis in degrees
 cdeg = 0   # Rotation around z axis in degrees
 
 a = d2r(adeg)
@@ -117,7 +120,7 @@ class Vertex:
         """Returns vertex coordinates as a Numpy array."""
         return np.array([self.x, self.y, self.z])
 
-    def display(self, dec=4):
+    def readout(self, dec=4):
         """Print the vertex coordinates."""
         if dec == -1:  # Set dec to -1 to disable rounding
             print([self.x, self.y, self.z])
@@ -189,6 +192,9 @@ class Face:
         cpdiag = np.cross(diag13, diag24)
         facearea = 0.5 * np.sqrt(np.einsum('...i,...i', cpdiag, cpdiag))
         return facearea
+    
+    def vertices(self):
+        return [self.p1, self.p2, self.p3, self.p4]
 
     def project(self, plane='xy'):
         """Project a copy of the frame onto a plane that is spanned by two
@@ -228,10 +234,10 @@ class Face:
         perpendicular = np.cross(p12, p14)
         return perpendicular / np.linalg.norm(perpendicular)
 
-    def display(self):
+    def readout(self):
         """Print vertices of face to console."""
         for point in [self.p1, self.p2, self.p3, self.p4]:
-            point.display()
+            point.readout()
 
     def plotlist(self):
         """Return three lists with the x, y, and z-components of all four
@@ -270,6 +276,18 @@ class Geometry():
         """Add a list of faces to the geometry"""
         for face in faces:
             self.faces.append(face)
+    
+    def vertices(self):
+        """This method loops through all the Face objects in the geometry,
+           lists the vertices making up each face, and removes the duplicates
+           in the list. It then returns a list of unique vertices."""
+        vertices = []
+        for face in self.faces:
+            face_vertices = face.vertices()
+            for vertex in face_vertices:
+                if vertex not in vertices:
+                    vertices.append(vertex)
+        return vertices
 
     def find_centroid(self):
         """Locate the centroid of the geometry.
@@ -508,7 +526,7 @@ print('Coarse method: A_xy =', A_shadow_check, 'm^2')
 print('Projected A_xy =', A_shadow, "m^2")
 
 # Toggle plotting functionality:
-if True:
+if False:
 
     fig = plt.figure(figsize=(10, 7))
     ax = mp3d.Axes3D(fig)
