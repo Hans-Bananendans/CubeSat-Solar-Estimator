@@ -31,8 +31,8 @@ def d2r(a):
 """ === CHANGE ROTATION OF BODY HERE === """
 
 # Note: choosing bdeg=90 will result in gimbal lock. 
-adeg = 0  # Rotation around x axis in degrees
-bdeg = 0  # Rotation around y axis in degrees
+adeg = 40  # Rotation around x axis in degrees
+bdeg = 30  # Rotation around y axis in degrees
 cdeg = 0   # Rotation around z axis in degrees
 
 """ ==================================== """
@@ -334,6 +334,7 @@ class Geometry():
         for vertex in vertices:
             vertex.rotate_origin(a=a, b=b, c=c, seq=seq)
     
+    # TODO: Find way to unify rotation functions, as this is a bit messy.
     def rotate(self, a, b, c, cor, seq='321'):
         """Rotate all the vertices in the geometry around a point in space.
            a is Euler angle of rotation around x, etc...
@@ -477,7 +478,8 @@ class Geometry():
         Requires that projection plane and illumination vector are 
         exactly perpendicular, for example:
             if projection plane is xy, then iv must be [0, 0, +1].
-        Units of the area are in terms of the same units as the vectors."""
+        Units of the area are in terms of the same units as the vectors.
+        TODO: Possibly merge with project_illuminated_area() method."""
 
         # Fetch projected shape and illuminated faces information:
         ill_faces = self.illuminated_faces(plane=plane)
@@ -491,6 +493,22 @@ class Geometry():
                 # Add the area of the current projected face:
                 illuminated_area += projection.faces[i].area
         return illuminated_area
+
+    def project_illuminated_faces(self, plane='xy'):
+        """Identical to the project_geometry() method, except it only
+           projects faces that are illuminated.
+           """
+        projected_faces = []
+        ill_faces = self.illuminated_faces(plane=plane)
+        
+        for i in range(len(self.faces)):
+            # Filter illuminated faces
+            if ill_faces[i] != 0:
+                projected_faces.append(self.faces[i].project(plane=plane))
+
+        projected_geometry = Geometry()
+        projected_geometry.add_faces(projected_faces)
+        return projected_geometry
 
     def project_geometry(self, plane='xy'):
         """Project a whole geometry by individually projecting each Face
@@ -510,7 +528,7 @@ class Geometry():
             vertex.readout()
 
 
-# %% Define body
+# %% Define geometry
 
 # # Old junk:
 # point1 = Vertex(0, 0, 0)
@@ -557,18 +575,11 @@ p6 = Vertex(0.0, 0.1, 0.2)
 p7 = Vertex(0.1, 0.1, 0.2)
 p8 = Vertex(0.1, 0.1, 0.0)
 
-pointcollection = [p1, p2, p3, p4, p5, p6, p7, p8]
 
 # Manually calculate centroid of Cubesat geometry
 COR = Vertex(0.05, 0.05, 0.1)
 COR.translate(0.1, 0.1, 0.1)
 
-# Transform individual vertices. This is a really lame way of doing this.
-# TODO: move the circuitry for transforming vertices inside class structure.
-# Problem: How to prevent points from being transformed more than once?
-for vertex in pointcollection:
-    vertex.translate(0.1, 0.1, 0.1)
-    vertex.rotate(a, b, c, COR)
 
 # Define faces of Cubesat
 fA = Face(p4, p3, p2, p1)
@@ -582,15 +593,22 @@ fF = Face(p5, p6, p7, p8)
 geometry1 = Geometry()
 geometry1.add_faces([fA, fB, fC, fD, fE, fF])
 
+# Translate geometry outward, so it is not positioned on the global axes.
+geometry1.translate(0.1, 0.1, 0.1)
+
+
+# Apply rotations as specified earlier.
+geometry1.rotate_cuboid_centroid(a, b, c)
+
 # Create a projection object that can be plotted later.
-geometry1xy = geometry1.project_geometry('xy')
+geometry1xy = geometry1.project_illuminated_faces('xy')
 
 # %% Plotting code
 
 # Check value for illuminated area. Because Cubesat is a cuboid, illuminated
 # area and the unilluminated area should be the same UNLESS only one side is 
 # facing the light. Used for debugging.
-A_shadow_check = round(geometry1xy.area() / 2, 4)
+A_shadow_check = round(geometry1xy.area(), 4)
 
 # Properly compute the illuminated area using Geometry method:
 A_shadow = round(geometry1.illuminated_area(plane='xy'), 4)
@@ -599,30 +617,11 @@ print('Coarse method: A_xy =', A_shadow_check, 'm^2')
 print('Projected A_xy =', A_shadow, "m^2")
 
 # Toggle plotting functionality:
-if False:
+if True:
 
-    fig = plt.figure(figsize=(10, 7))
-    ax = mp3d.Axes3D(fig)
-
-    ax.set_title("Wireframe visualization, A_xy = {} m^2".format(A_shadow))
-
-    """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
-    ax.view_init(elev=20, azim=-90)
-
-    # # Forcing aspect ratio for Axes3D object is still fucked up in
-    # # matplotlib source, even after many years. :(
-    # ax.set_aspect('equal')
-    # ax.set_box_aspect((1,1,1))
-
-    ax.set_xlim(0, 0.4)
-    ax.set_ylim(0, 0.4)
-    ax.set_zlim(0, 0.3)
-
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
-
-
+    # Define several helper functions for plotting 3D objects using
+    # matplotlib.
+    
     def plot_xyz_tripod(axes, alpha=1, scaling=1.):
         """Plots an rgb xyz tripod at the global origin.
             - alpha changes the opacity of the arrows. (default: 1)
@@ -634,13 +633,6 @@ if False:
                   arrow_length_ratio=0.15, color='green', alpha=alpha)
         ax.quiver(0, 0, 0, 0, 0, scaling,
                   arrow_length_ratio=0.15, color='blue', alpha=alpha)
-
-
-    # Plotting the XYZ tripod
-    plot_xyz_tripod(ax, scaling=0.25)
-
-    # Plotting the centroid of the geometry (manually)
-    ax.scatter(COR.x, COR.y, COR.z, c='cyan', s=20, alpha=0.5)
 
 
     def plot_face(axes, face, fill=0, alpha=0.2,
@@ -698,16 +690,7 @@ if False:
                           linecolour=linecolour, linealpha=linealpha)
 
 
-    # plot_face(ax, geometry1.faces[0], colour='black')
-
-    # Plot Cubesat model
-    plot_geometry(ax, geometry1, linecolour='black', fill=1, alpha=1,
-                  illumination=True)
-    # Plot projection of Cubesat
-    plot_geometry(ax, geometry1xy, linecolour='orange')
-
-
-    def plot_geometry_perpendiculars(axes, geometry, colour='gray', alpha=0.5):
+    def plot_geometry_perpendiculars(axes, geometry, colour='gray', alpha=.5):
         """Plots the normals/perpendiculars of each face in a geometry, and 
            displays them as little gray arrows.
            TODO: Implement scaling."""
@@ -730,6 +713,41 @@ if False:
                   xyzuvw[3][:], xyzuvw[4][:], xyzuvw[5][:],
                   color=colour, alpha=alpha)
 
+
+    # Setting up the plot:
+
+    fig = plt.figure(figsize=(10, 7))
+    ax = mp3d.Axes3D(fig)
+
+    """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
+    ax.view_init(elev=20, azim=-90)
+
+    # # Forcing aspect ratio for Axes3D object is still fucked up in
+    # # matplotlib source, even after many years. :(
+    # ax.set_aspect('equal')
+    # ax.set_box_aspect((1,1,1))
+    
+    ax.set_title("Wireframe visualization, A_xy = {} m^2".format(A_shadow))
+
+    ax.set_xlim(0, 0.4)
+    ax.set_ylim(0, 0.4)
+    ax.set_zlim(0, 0.3)
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+
+    # Plotting the XYZ tripod
+    plot_xyz_tripod(ax, scaling=0.25)
+
+    # Plotting the centroid of the geometry (manually)
+    ax.scatter(COR.x, COR.y, COR.z, c='cyan', s=20, alpha=0.5)
+
+    # Plot Cubesat model
+    plot_geometry(ax, geometry1, linecolour='black', fill=1, alpha=1,
+                  illumination=True)
+    # Plot projection of Cubesat
+    plot_geometry(ax, geometry1xy, linecolour='orange')
 
     # Highlight one of the faces in bright yellow (useful for debugging)
     # plot_face(ax, geometry1.faces[5], colour='yellow')    
