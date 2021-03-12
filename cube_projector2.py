@@ -8,6 +8,14 @@ Version: 1.1
 
 TODO: Move 3D engine tools to separate library
 TODO: Build tools to model dynamic behaviour
+ - For Earth-facing spacecraft: 
+     
+     J . d/dt(omega) + omega x J . omega = 3n^2 * a3 xJ.a3 
+     
+     [ tdot1 ]    1  [ct2 st1*st2  ct1*st2] [omega1]    n  [   st3   ]
+     [ tdot2 ] = --- [ 0  ct1*ct2 -st1*ct2] [omega2] + --- [ ct2*ct3 ]
+     [ tdot3 ]   ct2 [ 0    st1      ct1  ] [omega3]   ct2 [ st2*st3 ]
+     
 TODO: Add ways to compute power using solar flux and incidence angle
 TODO: Add second point of light as albedo source
 TODO: Add orbital propagation of point mass
