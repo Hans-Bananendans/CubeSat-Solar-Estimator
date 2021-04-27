@@ -596,8 +596,8 @@ class Geometry():
 """ === CHANGE ROTATION OF BODY HERE === """
 
 # Note: choosing bdeg=90 will result in gimbal lock. 
-adeg = 40  # Rotation around x axis in degrees
-bdeg = 30  # Rotation around y axis in degrees
+adeg = 0 # Rotation around x axis in degrees
+bdeg = 0  # Rotation around y axis in degrees
 cdeg = 0   # Rotation around z axis in degrees
 
 """ ==================================== """
@@ -658,7 +658,7 @@ print('Coarse method: A_xy =', A_shadow_check, 'm^2')
 print('Projected A_xy =', A_shadow, "m^2")
 
 # Toggle plotting functionality:
-if False:
+if True:
 
     # Define several helper functions for plotting 3D objects using
     # matplotlib.
