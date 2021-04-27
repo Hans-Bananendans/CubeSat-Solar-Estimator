@@ -4,7 +4,7 @@ Collection of code fragments dealing with three-dimensional manipulation and ren
 ## Example output in Matplotlib
 ![alt text](./cube_projector2_example.png?raw=true)
 
-##Code structure: 
+## Code structure: 
  * Adds a **Vertex** class that defines a vertex in 3D space. 
  * Four instances of the Vertex class can then be used to make a quadrilateral **Face**. A Face has only one side, and so its area is computed from one side only. The order with which the vertices are supplied does matter, and should be done with care.
  * A **Geometry** is a collection of Face objects. These can be translated and rotated by manipulating the underlying Vertex and Face objects. 
