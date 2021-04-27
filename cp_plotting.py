@@ -65,7 +65,7 @@ def plot_face(axes, face: Face, fill=0, alpha=0.2,
 
 def plot_geometry(axes, geometry: Geometry, fill=0, alpha=0.2,
                   linecolour='black', linealpha=1,
-                  illumination=False):
+                  illumination=False, illumination_plane='xy'):
     """Plot geometry by individually plotting its faces. If illumination 
        is turned on, uses illuminated_faces() method to fetch which faces 
        are illuminated, and passes this to the plot_face() function.
@@ -73,7 +73,7 @@ def plot_geometry(axes, geometry: Geometry, fill=0, alpha=0.2,
        TODO: Allow passing of 'plane'
        """
     if illumination == True:
-        ill_faces = geometry.illuminated_faces(plane='xy')
+        ill_faces = geometry.illuminated_faces(plane=illumination_plane)
         for idx, face in enumerate(geometry.faces):
             plot_face(axes, face, fill=fill, alpha=alpha,
                       linecolour=linecolour, linealpha=linealpha,
