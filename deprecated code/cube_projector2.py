@@ -4,10 +4,21 @@ Created on Thu Mar 4 15:02:11 2021
 
 @author: Johan Monster
 
-Version: 1.0
+Version: 1.1
 
-TODO: Make translation and rotation member functions of geometry.
-
+TODO: Move 3D engine tools to separate library
+TODO: Build tools to model dynamic behaviour
+ - For Earth-facing spacecraft: 
+     
+     J . d/dt(omega) + omega x J . omega = 3n^2 * a3 xJ.a3 
+     
+     [ tdot1 ]    1  [ct2 st1*st2  ct1*st2] [omega1]    n  [   st3   ]
+     [ tdot2 ] = --- [ 0  ct1*ct2 -st1*ct2] [omega2] + --- [ ct2*ct3 ]
+     [ tdot3 ]   ct2 [ 0    st1      ct1  ] [omega3]   ct2 [ st2*st3 ]
+     
+TODO: Add ways to compute power using solar flux and incidence angle
+TODO: Add second point of light as albedo source
+TODO: Add orbital propagation of point mass
 
 """
 
@@ -28,19 +39,36 @@ def d2r(a):
     return a * np.pi / 180
 
 
-""" === CHANGE ROTATION OF BODY HERE === """
+def e2q(a, b, c, seq='321'):
+    """Converts Euler angles to quaternions."""
+    q = np.array([
+        [sin(.5*c)*cos(.5*b)*cos(.5*a) - cos(.5*c)*sin(.5*b)*sin(.5*a)],
+        [cos(.5*c)*sin(.5*b)*cos(.5*a) + sin(.5*c)*cos(.5*b)*sin(.5*a)],
+        [cos(.5*c)*cos(.5*b)*sin(.5*a) - sin(.5*c)*sin(.5*b)*cos(.5*a)],
+        [cos(.5*c)*cos(.5*b)*cos(.5*a) + sin(.5*c)*sin(.5*b)*sin(.5*a)]
+        ])
+    return q
 
-# Note: choosing bdeg=90 will result in gimbal lock. 
-adeg = 40  # Rotation around x axis in degrees
-bdeg = 30  # Rotation around y axis in degrees
-cdeg = 0   # Rotation around z axis in degrees
-
-""" ==================================== """
-
-a = d2r(adeg)
-b = d2r(bdeg)
-c = d2r(cdeg)
-
+def q2e(quaternion, seq='321', returnarray=False):
+    """Converts a unit quaternion to a set of euler angles."""
+    q1, q2, q3, q4 = quaternion
+    q1 = float(q1)
+    q2 = float(q2)
+    q3 = float(q3)
+    q4 = float(q4)
+    length = round(q1*q1 + q2*q2 + q3*q3 + q4*q4, 8)
+    if length != 1:
+        raise ValueError("Quaternion given is not a unit quaternion. "
+                         "|q|^2 = {} != 1".format(length))
+    
+    a = np.arctan2(2*(q4*q3 + q1*q2), 1-2*(q2*q2 + q3*q3))
+    b = np.arcsin( 2*(q4*q2 - q3*q1))
+    c = np.arctan2(2*(q4*q1 + q2*q3), 1-2*(q1*q1 + q2*q2))
+    
+    if returnarray == True:
+        return np.array([round(a,10), round(b,10), round(c,10)])
+    else:
+        return round(a,10), round(b,10), round(c,10)
 
 class Vertex:
     """Custom implentation of a 3D point expressed in cartesians."""
@@ -63,17 +91,17 @@ class Vertex:
                 Rz(c).Ry(b).Rx(a).vertex
         """
 
-        Rx = np.array([[1, 0, 0],
+        Rx = np.array([[1,      0,       0],
                        [0, cos(a), -sin(a)],
-                       [0, sin(a), cos(a)]])
+                       [0, sin(a),  cos(a)]])
 
-        Ry = np.array([[cos(b), 0, sin(b)],
-                       [0, 1, 0],
+        Ry = np.array([[ cos(b), 0, sin(b)],
+                       [      0, 1,      0],
                        [-sin(b), 0, cos(b)]])
 
         Rz = np.array([[cos(c), -sin(c), 0],
-                       [sin(c), cos(c), 0],
-                       [0, 0, 1]])
+                       [sin(c),  cos(c), 0],
+                       [     0,       0, 1]])
 
         for axis in reversed(seq):
             if axis == '1':
@@ -565,6 +593,21 @@ class Geometry():
 # geometryt1.add_face(tf1)
 
 
+""" === CHANGE ROTATION OF BODY HERE === """
+
+# Note: choosing bdeg=90 will result in gimbal lock. 
+adeg = 0 # Rotation around x axis in degrees
+bdeg = 0  # Rotation around y axis in degrees
+cdeg = 0   # Rotation around z axis in degrees
+
+""" ==================================== """
+
+a = d2r(adeg)
+b = d2r(bdeg)
+c = d2r(cdeg)
+
+
+
 """Basic Cubesat model:"""
 p1 = Vertex(0.0, 0.0, 0.0)
 p2 = Vertex(0.0, 0.0, 0.2)
@@ -580,7 +623,6 @@ p8 = Vertex(0.1, 0.1, 0.0)
 COR = Vertex(0.05, 0.05, 0.1)
 COR.translate(0.1, 0.1, 0.1)
 
-
 # Define faces of Cubesat
 fA = Face(p4, p3, p2, p1)
 fB = Face(p2, p3, p7, p6)
@@ -595,7 +637,6 @@ geometry1.add_faces([fA, fB, fC, fD, fE, fF])
 
 # Translate geometry outward, so it is not positioned on the global axes.
 geometry1.translate(0.1, 0.1, 0.1)
-
 
 # Apply rotations as specified earlier.
 geometry1.rotate_cuboid_centroid(a, b, c)
