@@ -116,7 +116,7 @@ if True:
     def update(i):
         
         #Transforming the CubeSat model:
-        cubesat.rotate_cuboid_centroid(0,0,0)
+        cubesat.rotate_cuboid_centroid(angle_step,0,angle_step)
         
         # Updating the projection
         cubesat_pxz = cubesat.project_illuminated_faces('xz')
