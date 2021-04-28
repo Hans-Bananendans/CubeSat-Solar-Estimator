@@ -9,6 +9,7 @@ Version: 1.2
 
 """
 
+import numpy as np
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as mp3d
 
@@ -28,6 +29,16 @@ def plot_xyz_tripod(axes, alpha=1, scaling=1.):
     axes.quiver(0, 0, 0, 0, 0, scaling,
               arrow_length_ratio=0.15, color='blue', alpha=alpha)
 
+def plot_illumination_arrow(axes, illumination_vector, 
+                            alpha=1, scaling=1., colour="#FFC125"):
+    """Plots an arrow at the global origin, indicating illumination direction.
+        - alpha changes the opacity of the arrow. (default: 1)
+        - scaling changes the length of the arrow (default: 1)
+        - colour changes the plotting colour of the arrow (default: #FFC125)
+        """
+    iv = illumination_vector / np.linalg.norm(illumination_vector)
+    axes.quiver(0, 0, 0, iv[0]*scaling, iv[1]*scaling, iv[2]*scaling, 
+                arrow_length_ratio=0.15, color=colour, alpha=alpha)
 
 def plot_face(axes, face: Face, fill=0, alpha=0.2,
               linecolour='black', linealpha=1,

@@ -26,6 +26,9 @@ class Geometry():
     def __init__(self):
         """Creates an empty list that can be filled with faces."""
         self.faces = []
+        self.frame = np.array([[1, 0, 0],
+                               [0, 1, 0],
+                               [0, 0, 1]])
 
     def add_face(self, face: Face):
         """Add a singular face to the geometry"""
@@ -206,7 +209,13 @@ class Geometry():
             raise ValueError("Invalid plane given. Options: 'xy', '-xy', "
                              "'xz', '-xz', 'yz', '-yz'")
         return iv
-
+    
+    def illumination_vector_new(self, vector):
+        """Converts a given vector into a unit vector for use as an
+           illumination vector.
+           """
+        return vector / np.linalg.norm(vector)
+ 
     def illuminated_faces(self, plane='xy'):
         """Computes which faces of the geometry are illuminated given
         a certain illumination vector. It returns a vector representing
@@ -217,6 +226,30 @@ class Geometry():
         # Fetch direction of illumination and face perpendiculars.
         # Both MUST be unit vectors (and should be).
         iv = self.illumination_vector(plane=plane)
+        perps = self.find_perpendiculars(scale=1)
+
+        # Pre-allocate illuminated_faces vector
+        illuminated_faces = np.zeros(len(self.faces))
+        for i in range(len(perps)):
+            # Calculate dot product between iv and face i
+            ill_status = np.dot(iv, perps[i])
+            # Face is illuminated only if ill_status < 0:
+            if ill_status < 0:
+                illuminated_faces[i] = np.arccos(ill_status) - np.pi / 2
+            else:
+                pass
+        return illuminated_faces
+
+    def illuminated_faces_new(self, illumination_vector):
+        """Computes which faces of the geometry are illuminated given
+        a certain illumination vector. It returns a vector representing
+        each face in the geometry. If the value is 0, the face is not
+        illuminated. If it is non-zero, it represents the angle in radians
+        that the respective face makes with the illumination vector."""
+
+        # Fetch direction of illumination and face perpendiculars.
+        # Both MUST be unit vectors (and should be).
+        iv = self.illumination_vector(illumination_vector)
         perps = self.find_perpendiculars(scale=1)
 
         # Pre-allocate illuminated_faces vector
