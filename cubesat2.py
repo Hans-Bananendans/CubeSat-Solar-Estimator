@@ -21,7 +21,9 @@ TODO: Add orbital propagation of point mass
 
 """
 
+import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import mpl_toolkits.mplot3d as mp3d
 
 from cp_utilities import r2d, d2r, q2e, e2q
@@ -37,8 +39,8 @@ from cp_plotting import plot_xyz_tripod, plot_geometry, \
 
 # Note: choosing bdeg=90 will result in gimbal lock. 
 adeg = 0  # Rotation around x axis in degrees
-bdeg = 40 # Rotation around y axis in degrees
-cdeg = 30 # Rotation around z axis in degrees
+bdeg = 30  # Rotation around y axis in degrees
+cdeg = 0  # Rotation around z axis in degrees
 
 """ ==================================== """
 
@@ -71,74 +73,114 @@ fE = Face(p1, p2, p6, p5)
 fF = Face(p5, p6, p7, p8)
 
 # Initialize Cubesat model as a Geometry object.
-geometry1 = Geometry()
-geometry1.add_faces([fA, fB, fC, fD, fE, fF])
+cubesat = Geometry()
+cubesat.add_faces([fA, fB, fC, fD, fE, fF])
 
 # Translate geometry outward, so it is not positioned on the global axes.
-geometry1.translate(0.1, 0.1, 0.1)
+cubesat.translate(0.1, 0.25, 0.1)
 
 # Apply rotations as specified earlier.
-geometry1.rotate_cuboid_centroid(a, b, c)
+cubesat.rotate_cuboid_centroid(a, b, c)
 
-# Create a projection object that can be plotted later.
-geometry1xz = geometry1.project_illuminated_faces('xz')
 
 
 # %% Plotting code
 
-# Check value for illuminated area. Because Cubesat is a cuboid, illuminated
-# area and the unilluminated area should be the same UNLESS only one side is 
-# facing the light. Used for debugging.
-A_shadow_check = round(geometry1xz.area(), 4)
 
 # Properly compute the illuminated area using Geometry method:
-A_shadow = round(geometry1.illuminated_area(plane='xz'), 4)
+A_shadow = round(cubesat.illuminated_area(plane='xz'), 4)
 
-print('Coarse method: A_xz =', A_shadow_check, 'm^2')
 print('Projected A_xz =', A_shadow, "m^2")
 
 # Toggle plotting functionality:
 if True:
+    
     # Setting up the plot:
-
     fig = plt.figure(figsize=(10, 7))
     ax = mp3d.Axes3D(fig)
 
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
     ax.view_init(elev=20, azim=-90)
-
-    # # Forcing aspect ratio for Axes3D object is still fucked up in
-    # # matplotlib source, even after many years. :(
-    # ax.set_aspect('equal')
-    # ax.set_box_aspect((1,1,1))
     
-    ax.set_title("Wireframe visualization, A_xz = {} m^2".format(A_shadow))
 
-    ax.set_xlim(0, 0.4)
-    ax.set_ylim(0, 0.4)
-    ax.set_zlim(0, 0.3)
+    steps = 64
+    angle_step = d2r(360/steps)
+    
+    
+    # Pre-allocate illuminated area array
+    A_illuminated = np.zeros(steps)
+    
+    def update(i):
+        
+        #Transforming the CubeSat model:
+        cubesat.rotate_cuboid_centroid(angle_step,-angle_step,0)
+        
+        # Updating the projection
+        cubesat_pxz = cubesat.project_illuminated_faces('xz')
+        
+        
+        # Calculating the illuminated area
+        A_ill = round(cubesat.illuminated_area(plane='xz'), 4)
+        
+        # Dirty hack to get illuminated out of function
+        global A_illuminated
+        A_illuminated[i] = A_ill
+        
+        # Setting up the axes object
+        ax.clear()
+        
+        ax.set_title("Wireframe visualization. A_xz = {} m^2  -  frame:{}".format(A_shadow, str(i)))
+        
+        ax.set_xlim(0, 0.4)
+        ax.set_ylim(0, 0.4)
+        ax.set_zlim(0, 0.3)
+    
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        
+        
+        # Plotting the XYZ tripod
+        plot_xyz_tripod(ax, scaling=0.25)
+    
+        # Plotting the centroid of the geometry (manually)
+        # COR = cubesat.find_cuboid_centroid()
+        # ax.scatter(COR.x, COR.y, COR.z, c='cyan', s=20, alpha=0.5)
+    
+        # Plot Cubesat model
+        plot_geometry(ax, cubesat, linecolour='black', fill=1, alpha=1,
+                      illumination=True, illumination_plane='xz')
+       
+        # Plot projection of Cubesat
+        plot_geometry(ax, cubesat_pxz, linecolour='orange')
+    
+        # Highlight one of the faces in bright yellow (useful for debugging)
+        # plot_face(ax, cubesat.faces[5], colour='yellow')    
+    
+        # Plotting the perpendiculars
+        # plot_geometry_perpendiculars(ax, cubesat)
 
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
+    ani = animation.FuncAnimation(fig, update, np.arange(steps), interval = 100, repeat = False)
 
-    # Plotting the XYZ tripod
-    plot_xyz_tripod(ax, scaling=0.25)
+    plt.show()
 
-    # Plotting the centroid of the geometry (manually)
-    COR = geometry1.find_cuboid_centroid()
-    ax.scatter(COR.x, COR.y, COR.z, c='cyan', s=20, alpha=0.5)
 
-    # Plot Cubesat model
-    plot_geometry(ax, geometry1, linecolour='black', fill=1, alpha=1,
-                  illumination=True, illumination_plane='xz')
-    # Plot projection of Cubesat
-    plot_geometry(ax, geometry1xz, linecolour='orange')
 
-    # Highlight one of the faces in bright yellow (useful for debugging)
-    # plot_face(ax, geometry1.faces[5], colour='yellow')    
+def plot_A_ill(A_ill):
+    # Calculate average area
+    A_avg = round(sum(A_ill)/len(A_ill), 4)
+    
+    # Set up plot
+    fig_tmp = plt.figure(figsize=(10, 7))
+    ax_tmp = fig_tmp.add_subplot(111)
+    ax_tmp.set_ylim([0, 0.04])
+    plt.title("Illuminated CubeSat area during simulation.")
+    plt.xlabel("Simulation steps")
+    plt.ylabel("Illuminated area [m^2]")    
+    plt.text(0,0.035,"Average area: {} m^2".format(A_avg), color='r')
+    # Area progression plot
+    plt.plot(range(len(A_ill)), A_ill, 'k')
+    
+    # Average area plot
+    plt.plot([0, len(A_ill)], [A_avg, A_avg], 'r:')
 
-    # Plotting the perpendiculars
-    plot_geometry_perpendiculars(ax, geometry1)
-
-    fig.show()

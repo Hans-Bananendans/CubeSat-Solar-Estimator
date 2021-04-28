@@ -26,6 +26,9 @@ class Geometry():
     def __init__(self):
         """Creates an empty list that can be filled with faces."""
         self.faces = []
+        self.frame = np.array([[1, 0, 0],
+                               [0, 1, 0],
+                               [0, 0, 1]])
 
     def add_face(self, face: Face):
         """Add a singular face to the geometry"""
