@@ -31,7 +31,7 @@ from cp_vertex import Vertex
 from cp_face import Face
 from cp_geometry import Geometry
 from cp_plotting import plot_xyz_tripod, plot_geometry, \
-    plot_geometry_perpendiculars
+    plot_geometry_perpendiculars, plot_illumination_arrow
 
 # %% Defining the body
 
@@ -113,7 +113,7 @@ if True:
     def update(i):
         
         #Transforming the CubeSat model:
-        cubesat.rotate_cuboid_centroid(angle_step,-angle_step,0)
+        cubesat.rotate_cuboid_centroid(angle_step,-angle_step,angle_step)
         
         # Updating the projection
         cubesat_pxz = cubesat.project_illuminated_faces('xz')
@@ -159,6 +159,9 @@ if True:
     
         # Plotting the perpendiculars
         # plot_geometry_perpendiculars(ax, cubesat)
+        
+        # Plotting the illumination arrow:
+        plot_illumination_arrow(ax, np.array([0,1,0]), scaling=0.3)
 
     ani = animation.FuncAnimation(fig, update, np.arange(steps), interval = 100, repeat = False)
 
