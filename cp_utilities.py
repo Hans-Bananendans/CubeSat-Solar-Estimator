@@ -53,3 +53,34 @@ def q2e(quaternion, seq='321', returnarray=False):
         return np.array([round(a,10), round(b,10), round(c,10)])
     else:
         return round(a,10), round(b,10), round(c,10)
+    
+def euler_rotation(self, a, b, c, vector, seq='321'):
+    """ Rotates a vector using sequential Euler rotations.
+        a is Euler angle of rotation around x, etc...
+            expressed in radians
+        vector is the vector to be rotated
+        seq is a string with the rotation sequence, e.g. '321' for:
+            Rz(c).Ry(b).Rx(a).vertex
+    """
+
+    Rx = np.array([[1,      0,       0],
+                   [0, cos(a), -sin(a)],
+                   [0, sin(a),  cos(a)]])
+
+    Ry = np.array([[ cos(b), 0, sin(b)],
+                   [      0, 1,      0],
+                   [-sin(b), 0, cos(b)]])
+
+    Rz = np.array([[cos(c), -sin(c), 0],
+                   [sin(c),  cos(c), 0],
+                   [     0,       0, 1]])
+
+    for axis in reversed(seq):
+        if axis == '1':
+            vector = np.dot(Rx, vector)
+        if axis == '2':
+            vector = np.dot(Ry, vector)
+        if axis == '3':
+            vector = np.dot(Rz, vector)
+    
+    return vector

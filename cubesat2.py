@@ -39,14 +39,16 @@ from cp_plotting import plot_xyz_tripod, plot_geometry, \
 
 # Note: choosing bdeg=90 will result in gimbal lock. 
 adeg = 0  # Rotation around x axis in degrees
-bdeg = 30  # Rotation around y axis in degrees
-cdeg = 0  # Rotation around z axis in degrees
+bdeg = 0  # Rotation around y axis in degrees
+cdeg = 1*360/24  # Rotation around z axis in degrees
 
 """ ==================================== """
 
 a = d2r(adeg)
 b = d2r(bdeg)
 c = d2r(cdeg)
+
+abc = np.array([a, b, c])
 
 
 """Basic Cubesat model:"""
@@ -100,11 +102,12 @@ if True:
     ax = mp3d.Axes3D(fig)
 
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
-    ax.view_init(elev=20, azim=-90)
+    ax.view_init(elev=90, azim=-0)
     
 
-    steps = 64
+    steps = 128
     angle_step = d2r(360/steps)
+    
     
     
     # Pre-allocate illuminated area array
@@ -113,7 +116,7 @@ if True:
     def update(i):
         
         #Transforming the CubeSat model:
-        cubesat.rotate_cuboid_centroid(angle_step,-angle_step,angle_step)
+        cubesat.rotate_cuboid_centroid(0,0,0)
         
         # Updating the projection
         cubesat_pxz = cubesat.project_illuminated_faces('xz')
@@ -166,7 +169,6 @@ if True:
     ani = animation.FuncAnimation(fig, update, np.arange(steps), interval = 100, repeat = False)
 
     plt.show()
-
 
 
 def plot_A_ill(A_ill):
