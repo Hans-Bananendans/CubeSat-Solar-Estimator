@@ -187,6 +187,8 @@ class Geometry():
         for face in self.faces:
             A += face.area
         return A
+    
+    # Copied up until here:
 
     def illumination_vector(self, plane='xy'):
         """Generate an illumination vector based on a given plane.
