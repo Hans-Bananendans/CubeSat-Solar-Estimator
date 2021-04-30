@@ -27,7 +27,6 @@ class thing():
         self.parent = new_parent
         self.parent.add_thing(self)
 
-
 class thinglist():
     def __init__(self):
         self.thinglist = []

@@ -34,8 +34,7 @@ class Vertex:
             self.parent = None
 
     def connect_parent(self, new_parent):
-        """Connects vertex to a frame. If vertex was already attached to
-           a frame, it undoes this first.
+        """Connects vertex to a frame.
            """
         # Connect new parent:
         self.parent = new_parent
@@ -71,10 +70,65 @@ class Vertex:
     def update_translation(self):
         pass
     
-    def update_rotation(self):
-        self.x = np.dot(self.x, self.parent.dcm[0,:])
-        self.y = np.dot(self.y, self.parent.dcm[1,:])
-        self.z = np.dot(self.z, self.parent.dcm[2,:])        
+    def rotate(self, a, b, c, cor=None, seq='321'):
+        """ Rotates the vertex around a point in space.
+            a is Euler angle of rotation around x, etc...
+                expressed in radians
+            seq is a string with the rotation sequence, e.g. '321' for:
+                Rz(c).Ry(b).Rx(a).vertex
+            cor is the centre of rotation, which MUST be specified as
+                a vertex.
+        """
+
+        Rx = np.array([[1,      0,       0],
+                       [0, cos(a), -sin(a)],
+                       [0, sin(a),  cos(a)]])
+        
+        Ry = np.array([[ cos(b), 0, sin(b)],
+                       [      0, 1,      0],
+                       [-sin(b), 0, cos(b)]])
+        
+        Rz = np.array([[cos(c), -sin(c), 0],
+                       [sin(c),  cos(c), 0],
+                       [     0,       0, 1]])
+
+        for axis in reversed(seq):
+            
+            # If no Centre of Rotation (cor) is given, take frame origin.
+            # If not, subtract coordinates of cor first before applying 
+            # the rotation, and then reverse this afterwards.
+            if cor != None:
+                self.translate(-1*cor.x, -1*cor.y, -1*cor.z)
+            
+            if axis == '1':
+                (self.x, self.y, self.z) = \
+                np.dot(Rx, np.array([self.x, self.y, self.z]))
+                
+            if axis == '2':
+                (self.x, self.y, self.z) = \
+                np.dot(Ry, np.array([self.x, self.y, self.z]))
+            if axis == '3':
+                (self.x, self.y, self.z) = \
+                np.dot(Rz, np.array([self.x, self.y, self.z]))
+            
+            # Reverse temporary translation.
+            if cor != None:
+                self.translate(1*cor.x, 1*cor.y, 1*cor.z)
+            
+    def readout(self, dec=4):
+        """Print the vertex coordinates."""
+        if dec == -1:  # Set dec to -1 to disable rounding
+            print([self.x, self.y, self.z])
+        else:
+            print([round(self.x, dec),
+                   round(self.y, dec),
+                   round(self.z, dec)])
+    
+    # def update_rotation(self):
+    #     """Not needed in current implementation."""
+    #     self.x = np.dot(self.x, self.parent.dcm[0,:])
+    #     self.y = np.dot(self.y, self.parent.dcm[1,:])
+    #     self.z = np.dot(self.z, self.parent.dcm[2,:])        
 
 class Frame:
     """Custom implentation of a 3D point expressed in cartesians."""
@@ -91,6 +145,8 @@ class Frame:
         self.recalculate_dcm()
         
         self.vertices = []
+        self.face = []
+        self.geometry = []
 
     def add_vertex(self, vertex: Vertex):
         self.vertices.append(vertex)
@@ -157,7 +213,7 @@ def plot_vertex(axes, vertex, colour="#000", size=10):
                  z_global,
                  c=colour, s=size)
 
-def plot_frame(axes, frame, alpha=1, scaling=1.):
+def plot_frame_tripod(axes, frame, alpha=1, scaling=1.):
     """Plots an rgb xyz tripod at the global origin.
         - alpha changes the opacity of the arrows. (default: 1)
         - scaling changes the length of the arrows (default: 1)
@@ -173,7 +229,11 @@ def plot_frame(axes, frame, alpha=1, scaling=1.):
                 sc*frame.zdir[0], sc*frame.zdir[1], sc*frame.zdir[2],
               arrow_length_ratio=0.15, color='blue', alpha=alpha)
 
-def plot_frame_content(axes, frame):
+def plot_frame(axes, frame, show_tripod=True):
+    
+    if show_tripod:
+        plot_frame_tripod(axes, frame, scaling=0.25)
+    
     for vertex in frame.vertices:
         plot_vertex(axes, vertex)
 
@@ -207,13 +267,14 @@ if True:
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
     ax.view_init(elev=20, azim=-60)
     
-    steps = 180
+    steps = 40
     angle_step = d2r(360/steps)
     
     frame1 = Frame()
     # frame1.translate(2,2,2)
     
     vertex1 = Vertex(0.5,0,0,parent=frame1)
+    vertex2 = Vertex(0.5,0.5,0,parent=frame1)
     
     # Pre-allocate illuminated area array
     # A_illuminated = np.zeros(steps)
@@ -222,8 +283,10 @@ if True:
         
         # Transforming frame1
         frame1.translate(2/steps,2/steps,2/steps)
-        frame1.rotate(0,0,2*np.pi/(steps))
+        # frame1.rotate(0,0,-2*np.pi/(steps))
         # frame1.rotate(0,0,0)
+        
+        vertex1.rotate(2*np.pi/steps,0,0, cor=vertex2)
         
         # Setting up the axes object
         ax.clear()
@@ -245,9 +308,8 @@ if True:
         plot_global_tripod(ax)
         
         # Plot tripod of frame1:
-        plot_frame(ax, frame1, scaling=0.25)
-        
-        plot_frame_content(ax, frame1)
+        plot_frame(ax, frame1)
+
         
         # Plot vertex1
         # plot_vertex(ax, vertex1)
