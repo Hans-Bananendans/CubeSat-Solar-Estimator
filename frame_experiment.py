@@ -65,7 +65,7 @@ class Vertex:
         xyz_global = np.dot(self.parent.dcm, xyz_local)
         xyz_global += o_local
         
-        return xyz_global[0], xyz_global[1], xyz_global[2] 
+        return xyz_global[0], xyz_global[1], xyz_global[2]
         
     def update_translation(self):
         pass
@@ -115,20 +115,40 @@ class Vertex:
             if cor != None:
                 self.translate(1*cor.x, 1*cor.y, 1*cor.z)
             
-    def readout(self, dec=4):
+    def __str__(self):
         """Print the vertex coordinates."""
-        if dec == -1:  # Set dec to -1 to disable rounding
-            print([self.x, self.y, self.z])
-        else:
-            print([round(self.x, dec),
-                   round(self.y, dec),
-                   round(self.z, dec)])
+        return str([round(self.x, 5),
+                    round(self.y, 5),
+                    round(self.z, 5)])
     
-    # def update_rotation(self):
-    #     """Not needed in current implementation."""
-    #     self.x = np.dot(self.x, self.parent.dcm[0,:])
-    #     self.y = np.dot(self.y, self.parent.dcm[1,:])
-    #     self.z = np.dot(self.z, self.parent.dcm[2,:])        
+    def xyz(self):
+        """Returns a numpy array with the local x, y, z coordinates."""
+        return np.array([self.x, self.y, self.z])
+    
+    def xyz_global(self):
+        """Returns a numpy array with the global x, y, z coordinates."""
+        return np.array(self.global_coordinates())
+        
+    def readout(self, dec=4):
+        """More detailed information about Vertex.
+           Use dec to define the number of decimals before rounding.
+           Set dec to -1 to disable rounding.
+           """
+        if dec == -1:  # Set dec to -1 to disable rounding
+            localcoords = self.xyz()
+            globalcoords = self.xyz_global()
+            parentorigin = self.parent.origin()
+        else:
+            localcoords = np.round(self.xyz(), dec)
+            globalcoords = np.round(self.xyz_global(), dec)
+            parentorigin = np.round(self.parent.origin(), dec)
+        
+        
+        print("Parent frame: {}".format(self.parent))
+        print("Parent frame origin: {}".format(parentorigin))
+        print("Local coordinates:   {}".format(localcoords))
+        print("Global coordinates:  {}".format(globalcoords))
+
 
 class Frame:
     """Custom implentation of a 3D point expressed in cartesians."""
@@ -145,14 +165,18 @@ class Frame:
         self.recalculate_dcm()
         
         self.vertices = []
-        self.face = []
-        self.geometry = []
+        self.faces = []
+        self.geometries = []
+        self.vectors = []
 
     def add_vertex(self, vertex: Vertex):
         self.vertices.append(vertex)
 
     def remove_vertex(self, vertex: Vertex):
         self.vertices.remove(vertex)
+    
+    def origin(self):
+        return np.array([self.x, self.y, self.z])
     
     def recalculate_dcm(self):
         gx = np.array([1,0,0])
@@ -203,6 +227,30 @@ class Frame:
             self.translate(1*temp[0], 1*temp[1], 1*temp[2])
         
         self.recalculate_dcm()
+    
+    def readout(self, dec=4):
+        """More detailed information about Vertex.
+           Use dec to define the number of decimals before rounding.
+           Set dec to -1 to disable rounding.
+           """
+        if dec == -1:  # Set dec to -1 to disable rounding
+            origin = self.origin()
+        else:
+            origin = np.round(self.origin(), dec)
+        
+        children = len(self.vertices)   + \
+                   len(self.faces)      + \
+                   len(self.geometries) + \
+                   len(self.vectors)
+        
+        print("Carthesian coordinate frame.")
+        print("Frame origin: {}\n".format(origin))
+        print("Children: {}".format(children))
+        print("Associated Vertices:   {}".format(len(self.vertices)))
+        print("Associated Faces:      {}".format(len(self.faces)))
+        print("Associated Geometries: {}".format(len(self.geometries)))
+        print("Associated Vectors:    {}".format(len(self.vectors)))
+             
      
 def plot_vertex(axes, vertex, colour="#000", size=10):
     
