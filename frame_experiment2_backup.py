@@ -26,7 +26,6 @@ class Vertex:
         self.x = x
         self.y = y
         self.z = z
-        self.parent = parent
         self.connect_parent(parent)
     
     def remove_parent(self):
@@ -38,11 +37,18 @@ class Vertex:
             self.parent = None
 
     def connect_parent(self, new_parent):
-        """Connects vertex to a frame.
+        """Connects vertex to a frame, unless:
+            - the given new_parent is None
+            - the vertex is already in the frame (duplicate control)
            """
-        # Connect new parent:
+        # Set own parent to new_parent:
         self.parent = new_parent
-        self.parent.add_vertex(self)
+        
+        # Ensure new_parent is not None:
+        if new_parent != None:
+            # Ensure vertex is not already connected to parent
+            if self not in self.parent.vertices:
+                self.parent.add_vertex(self)
         
     def change_parent(self, new_parent):
         """Connects vertex to another frame. If vertex was already attached 
@@ -197,8 +203,9 @@ class Face:
            TODO: Add points to parent too.
            """
         # Connect new parent:
-        self.parent = new_parent
-        self.parent.add_face(self)
+        if self.parent != None:
+            self.parent = new_parent
+            self.parent.add_face(self)
         
     def change_parent(self, new_parent):
         """Connects vertex to another frame. If vertex was already attached 
@@ -726,33 +733,38 @@ if True:
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
     ax.view_init(elev=20, azim=-60)
     
-    steps = 40
+    steps = 128
     angle_step = d2r(360/steps)
     
     frame1 = Frame()
-    # frame1.translate(2,2,2)
+
+    projection_frame = Frame()
     
-    # vertex1 = Vertex(0.5,0,0,parent=frame1)
-    # vertex2 = Vertex(0.5,0.5,0,parent=frame1)
+    p1 = Vertex(-0.05, -0.05, -0.1, frame1)
+    p2 = Vertex(-0.05, -0.05, 0.1, frame1)
+    p3 = Vertex(0.05, -0.05, 0.1, frame1)
+    p4 = Vertex(0.05, -0.05, -0.1, frame1)
+    p5 = Vertex(-0.05, 0.05, -0.1, frame1)
+    p6 = Vertex(-0.05, 0.05, 0.1, frame1)
+    p7 = Vertex(0.05, 0.05, 0.1, frame1)
+    p8 = Vertex(0.05, 0.05, -0.1, frame1)
     
-    v4 = Vertex(0,0,0,parent=frame1)
-    v5 = Vertex(1,0,0,parent=frame1)
-    v6 = Vertex(1,1,0,parent=frame1)
-    v7 = Vertex(0,1,0,parent=frame1)
-    v8 = Vertex(0,1,1,parent=frame1)
-    v9 = Vertex(0,0,1,parent=frame1)
-    
-    f1 = Face(v4,v5,v6,v7,parent=frame1)
-    f2 = Face(v4,v7,v8,v9,parent=frame1)
-    # Pre-allocate illuminated area array
-    # A_illuminated = np.zeros(steps)
+    fA = Face(p4, p3, p2, p1, frame1)
+    fB = Face(p2, p3, p7, p6, frame1)
+    fC = Face(p3, p4, p8, p7, frame1)
+    fD = Face(p4, p1, p5, p8, frame1)
+    fE = Face(p1, p2, p6, p5, frame1)
+    fF = Face(p5, p6, p7, p8, frame1)
     
     
     def update(i):
         
         # Transforming frame1
-        frame1.translate(2/steps,2/steps,2/steps)
-        frame1.rotate(0,0,-2*np.pi/(steps))
+        if i < steps/2:
+            frame1.translate(2/steps,4/steps,4/steps)
+        else:
+            frame1.translate(2/steps,-4/steps,-4/steps)
+        frame1.rotate(0,-2*np.pi/steps,-2*np.pi/steps)
         # frame1.rotate(0,0,0)
         
         # vertex1.rotate(2*np.pi/steps,0,0, cor=vertex2)
@@ -762,9 +774,9 @@ if True:
         
         ax.set_title("Wireframe visualization. Frame: {}".format(str(i)))
         
-        ax.set_xlim(0, 0.4*10)
-        ax.set_ylim(0, 0.4*10)
-        ax.set_zlim(0, 0.3*10)
+        ax.set_xlim(0, 2.5)
+        ax.set_ylim(0, 2.5)
+        ax.set_zlim(0, 2)
         # ax.set_xlim(-1, 1)
         # ax.set_ylim(-1, 1)
         # ax.set_zlim(-1, 1)
