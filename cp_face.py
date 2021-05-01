@@ -41,7 +41,9 @@ class Face:
         self.area = self.calc_area()
         
         self.parent = parent
-        self.connect_parent(parent)
+        # If parent is not None, also add vertex to the parent as a child.
+        if parent is not None: 
+            self.parent.add_face(self)
     
     def remove_parent(self):
         """If Vertex has a parent frame, removes it as a parent, and ensures 
@@ -54,15 +56,6 @@ class Face:
             self.parent.remove_face(self)
             self.parent = None
 
-    def connect_parent(self, new_parent):
-        """Connects vertex to a frame.
-        
-           TODO: Add points to parent too.
-           """
-        # Connect new parent:
-        if self.parent != None:
-            self.parent = new_parent
-            self.parent.add_face(self)
         
     def change_parent(self, new_parent):
         """Connects vertex to another frame. If vertex was already attached 
@@ -71,12 +64,15 @@ class Face:
            TODO: Add points to parent too.
            """
         # Remove old parent first (if applicable):
-        if self.parent != None:
+        if self.parent is not None:
             self.remove_parent()
         
-        # Connect new parent:
+        # Update parent in child
         self.parent = new_parent
-        self.parent.add_face(self)
+        
+        # Edit new parent to add new child (unless new parent is None):
+        if new_parent is not None:
+            self.parent.add_face(self)
     
     def check_coplanarity(self):
         """Check if all points are coplanar, by investigating determinant
@@ -107,30 +103,47 @@ class Face:
         for vertex in [self.p1, self.p2, self.p3, self.p4]:
             print(vertex)
             
-    def plotlist(self):
+    def plotlist(self, uselocal=False):
         """Return three lists with the x, y, and z-components of all four
            vertices in the face."""
-        xlist = [self.p1.global_coordinates()[0], 
-                 self.p2.global_coordinates()[0],
-                 self.p3.global_coordinates()[0],
-                 self.p4.global_coordinates()[0]]
-        ylist = [self.p1.global_coordinates()[1], 
-                 self.p2.global_coordinates()[1],
-                 self.p3.global_coordinates()[1],
-                 self.p4.global_coordinates()[1]]
-        zlist = [self.p1.global_coordinates()[2], 
-                 self.p2.global_coordinates()[2],
-                 self.p3.global_coordinates()[2],
-                 self.p4.global_coordinates()[2]]                
-                 
-        # ylist = [self.p1.y, self.p2.y, self.p3.y, self.p4.y]
-        # zlist = [self.p1.z, self.p2.z, self.p3.z, self.p4.z]
+        if self.parent == None:
+            uselocal = True
+        
+        if uselocal:
+            # Fetch local vertex coordinates, and apply them to global frame
+            xlist = [self.p1.x, self.p2.x, self.p3.x, self.p4.x]
+            ylist = [self.p1.y, self.p2.y, self.p3.y, self.p4.y]
+            zlist = [self.p1.z, self.p2.z, self.p3.z, self.p4.z]
+        else:
+            # Fetch global vertex coordinates, and apply them to global frame
+            xlist = [self.p1.global_coordinates()[0], 
+                     self.p2.global_coordinates()[0],
+                     self.p3.global_coordinates()[0],
+                     self.p4.global_coordinates()[0]]
+            ylist = [self.p1.global_coordinates()[1], 
+                     self.p2.global_coordinates()[1],
+                     self.p3.global_coordinates()[1],
+                     self.p4.global_coordinates()[1]]
+            zlist = [self.p1.global_coordinates()[2], 
+                     self.p2.global_coordinates()[2],
+                     self.p3.global_coordinates()[2],
+                     self.p4.global_coordinates()[2]]        
         return xlist, ylist, zlist
 
-    def plotlist2(self):
+    def plotlist2(self, uselocal=False):
         """Return a list of lists with the xyz coordinates of each vertex."""
-        grid1 = np.array([self.p1.xyz_global(), self.p2.xyz_global(),
-                          self.p3.xyz_global(), self.p4.xyz_global()])
+        # If object has no parent, return plot list in terms of global frame:
+        if self.parent == None:
+            uselocal = True
+        
+        if uselocal:
+            # Fetch local vertex coordinates, and apply them to global frame
+            grid1 = np.array([self.p1.xyz(), self.p2.xyz(),
+                              self.p3.xyz(), self.p4.xyz()])
+        else:
+            # Fetch global vertex coordinates, and apply them to global frame
+            grid1 = np.array([self.p1.xyz_global(), self.p2.xyz_global(),
+                              self.p3.xyz_global(), self.p4.xyz_global()])
         return grid1.tolist()
     
     # def project(self, plane='xy'):

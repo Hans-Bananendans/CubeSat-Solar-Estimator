@@ -27,8 +27,11 @@ class Geometry:
     def __init__(self, parent=None):
         
         self.faces = []
+
         self.parent = parent
-        self.connect_parent(parent)
+        # If parent is not None, also add vertex to the parent as a child.
+        if parent is not None: 
+            self.parent.add_geometry(self)
     
     def remove_parent(self):
         """If geometry has a parent frame, removes it as a parent, and 
@@ -36,32 +39,27 @@ class Geometry:
            
            TODO: Garbage removal.
            """
-        if self.parent != None:
+        if self.parent is not None:
             self.parent.remove_geometry(self)
             self.parent = None
 
-    def connect_parent(self, new_parent):
-        """Connects geometry to a frame.
-        
-           TODO: Garbage removal.
-           """
-        # Connect new parent:
-        self.parent = new_parent
-        self.parent.add_geometry(self)
         
     def change_parent(self, new_parent):
-        """Connects geometry to another frame. If vertex was already attached 
-           to a frame, it undoes this first.
+        """Connects geometry to another frame. If geometry was already 
+           attached to a frame, it undoes this first.
            
            TODO: Garbage removal
            """
-        # Remove old parent first (if applicable):
-        if self.parent != None:
+        # Remove old parent first (if current parent is not None):
+        if self.parent is not None:
             self.remove_parent()
         
-        # Connect new parent:
+        # Update parent in child
         self.parent = new_parent
-        self.parent.add_geometry(self)
+        
+        # Edit new parent to add new child (unless new parent is None):
+        if new_parent is not None:
+            self.parent.add_geometry(self)
     
     def add_face(self, face: Face):
         """Add a singular face to the geometry

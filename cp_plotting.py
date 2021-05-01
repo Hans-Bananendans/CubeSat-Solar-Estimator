@@ -23,7 +23,11 @@ from cp_frame import Frame
 def plot_vertex(axes: plt.matplotlib.axes, vertex: Vertex, 
                 colour="#000", size=10):
     
-    x_global, y_global, z_global = vertex.global_coordinates()
+    # If vertex has no parent, use global frame:
+    if vertex.parent == None:
+        x_global, y_global, z_global = vertex.xyz()
+    else:
+        x_global, y_global, z_global = vertex.global_coordinates()
     
     axes.scatter(x_global, 
                  y_global,

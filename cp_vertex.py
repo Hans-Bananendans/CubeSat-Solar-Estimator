@@ -26,41 +26,34 @@ class Vertex:
         self.x = x
         self.y = y
         self.z = z
-        self.connect_parent(parent)
+        
+        self.parent = parent
+        # If parent is not None, also add vertex to the parent as a child.
+        if parent is not None: 
+            self.parent.add_vertex(self)
     
     def remove_parent(self):
         """If Vertex has a parent frame, removes it as a parent, and ensures 
            it is removed from the internal list in the frame.
            """
-        if self.parent != None:
+        if self.parent is not None:
             self.parent.remove_vertex(self)
             self.parent = None
-
-    def connect_parent(self, new_parent):
-        """Connects vertex to a frame, unless:
-            - the given new_parent is None
-            - the vertex is already in the frame (duplicate control)
-           """
-        # Set own parent to new_parent:
-        self.parent = new_parent
-        
-        # Ensure new_parent is not None:
-        if new_parent != None:
-            # Ensure vertex is not already connected to parent
-            if self not in self.parent.vertices:
-                self.parent.add_vertex(self)
         
     def change_parent(self, new_parent):
         """Connects vertex to another frame. If vertex was already attached 
            to a frame, it undoes this first.
            """
-        # Remove old parent first (if applicable):
-        if self.parent != None:
+        # Remove old parent first (if current parent is not None):
+        if self.parent is not None:
             self.remove_parent()
         
-        # Connect new parent:
+        # Update parent in child
         self.parent = new_parent
-        self.parent.add_vertex(self)
+        
+        # Edit new parent to add new child (unless new parent is None):
+        if new_parent is not None:
+            self.parent.add_vertex(self)
     
     def global_coordinates(self):
         # Vertex coordinates in terms of parent frame
