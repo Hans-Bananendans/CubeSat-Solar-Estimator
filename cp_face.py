@@ -54,6 +54,7 @@ class Face:
            """
         if self.parent != None:
             self.parent.remove_face(self)
+            # Fetch list of faces from parent.faces
             self.parent = None
 
         

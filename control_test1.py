@@ -44,6 +44,7 @@ p1 = Vertex(0,0,0)
 # f1 = Face(p1, p2, p3, p4, frame1)
 # f2 = Face(p1, p4, p5, p6, frame1)
 
+f1 = Face(Vertex(0,0,0), Vertex(1,0,0), Vertex(1,1,0), Vertex(0,1,0))
 
 
 
