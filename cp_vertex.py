@@ -32,17 +32,27 @@ class Vertex:
         if parent is not None: 
             self.parent.add_vertex(self)
     
-    
-    def delete(self):
+    # def delete(self):
+    #     """Custom deconstructor to clean up child-parent relationships."""
+    #     try:
+    #         print("Tried to clean up child-parent relationships in {} ({})"
+    #               .format(self, hex(id(self))))
+    #         self.remove_parent()
+    #     finally:
+    #         print("Finally tried to delete self.")
+    #         del(self)
+            
+    def __del__(self):
         """Custom deconstructor to clean up child-parent relationships."""
         try:
-            print("Tried to clean up child-parent relationships in {} ({})"
+            print("[DEBUG] Erasing c-p relation of {} ({})"
                   .format(self, hex(id(self))))
             self.remove_parent()
-        finally:
-            print("Finally tried to delete self.")
-            del(self)
             
+        finally:
+            print("[DEBUG] Deleting {}.".format(self))
+            del(self)
+    
     def remove_parent(self):
         """If Vertex has a parent frame, removes it as a parent, and ensures 
            it is removed from the internal list in the frame.

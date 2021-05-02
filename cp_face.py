@@ -47,27 +47,20 @@ class Face:
             for vertex in [self.p1, self.p2, self.p3, self.p4]:
                 vertex.change_parent(parent)
             
-    def delete(self):
+            
+    def __del__(self):
         """Custom deconstructor to clean up child-parent relationships."""
         try:
-            print("Tried to clean up child-parent relationships in {}"
-                  .format(self))
             for vertex in [self.p1, self.p2, self.p3, self.p4]:
-                vertex.delete()
+                vertex.__del__()
+            print("[DEBUG] Erasing c-p relation of {}".format(self))
+            
+            self.remove_parent()
 
         finally:
-            print("Finally tried to delete self.")
+            print("[DEBUG] Deleting {}.".format(self))
             del(self)
     
-    # def __del__(self):
-    #     """Custom deconstructor to clean up child-parent relationships."""
-
-    #     print("Tried to clean up child-parent relationships in {}"
-    #           .format(self))
-    #     self.remove_parent()
-
-    #     print("Finally tried to delete self.")
-    #     del(self)
 
     def remove_parent(self):
         """If Face has a parent frame, removes it as a parent, and ensures 

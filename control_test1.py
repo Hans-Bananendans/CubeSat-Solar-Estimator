@@ -34,7 +34,7 @@ frame1.translate(1,1,1)
 
 # frame2 = Frame()
 
-p1 = Vertex(0,0,0)
+p1 = Vertex(0,0,0,frame1)
 # p2 = Vertex(1,0,0)
 # p3 = Vertex(1,1,0)
 # p4 = Vertex(0,1,0)
@@ -47,10 +47,11 @@ p1 = Vertex(0,0,0)
 f1 = Face(Vertex(0,0,0), Vertex(1,0,0), Vertex(1,1,0), Vertex(0,1,0), frame1)
 
 # f1.remove_parent()
+frame1.readout()
 
-f1.delete()
-
-f1.readout()
+del(f1)
+# f1.__del__()
+frame1.readout()
 
 #%% ==== Plotting ====
 
