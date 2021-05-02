@@ -44,23 +44,62 @@ class Face:
         # If parent is not None, also add vertex to the parent as a child.
         if parent is not None: 
             self.parent.add_face(self)
+            for vertex in [self.p1, self.p2, self.p3, self.p4]:
+                vertex.change_parent(parent)
+            
+    def delete(self):
+        """Custom deconstructor to clean up child-parent relationships."""
+        try:
+            print("Tried to clean up child-parent relationships in {}"
+                  .format(self))
+            for vertex in [self.p1, self.p2, self.p3, self.p4]:
+                vertex.delete()
+
+        finally:
+            print("Finally tried to delete self.")
+            del(self)
     
+    # def __del__(self):
+    #     """Custom deconstructor to clean up child-parent relationships."""
+
+    #     print("Tried to clean up child-parent relationships in {}"
+    #           .format(self))
+    #     self.remove_parent()
+
+    #     print("Finally tried to delete self.")
+    #     del(self)
+
     def remove_parent(self):
-        """If Vertex has a parent frame, removes it as a parent, and ensures 
-           it is removed from the internal list in the frame.
+        """If Face has a parent frame, removes it as a parent, and ensures 
+           it is removed from the internal list in the frame. It also detaches
+           the four vertices from the parent.
            
-           TODO: Check if vertices aren't used in other faces.
-                 If not, remove that vertex as well.
            """
         if self.parent != None:
             self.parent.remove_face(self)
-            # Fetch list of faces from parent.faces
+            
+            for vertex in [self.p1, self.p2, self.p3, self.p4]:
+            
+                # TODO: Non-uniqueness
+                # ====== Non-uniqueness implementation ======
+                # Find out which geometry the face is in.
+                # Fetch list of faces in geometry
+                # Fetch list of vertices in all faces of geometry, except
+                #    this face.
+                # Check for matches between this list and [p1, p2, p3, p4] of
+                #    this face.
+                # For matches, do not call .remove_parent() on Vertex
+                # For non-matches, call .remove_parent() on Vertex
+                
+                vertex.remove_parent()
+
             self.parent = None
 
         
     def change_parent(self, new_parent):
-        """Connects vertex to another frame. If vertex was already attached 
-           to a frame, it undoes this first.
+        """Connects face to another frame. If face was already attached 
+           to a frame, it undoes this first. Then it does the same for all
+           four vertices making up the frame.
            
            TODO: Add points to parent too.
            """
@@ -74,6 +113,9 @@ class Face:
         # Edit new parent to add new child (unless new parent is None):
         if new_parent is not None:
             self.parent.add_face(self)
+        
+        for vertex in [self.p1, self.p2, self.p3, self.p4]:
+            vertex.change_parent(new_parent)
     
     def check_coplanarity(self):
         """Check if all points are coplanar, by investigating determinant

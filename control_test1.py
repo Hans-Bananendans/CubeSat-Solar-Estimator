@@ -32,7 +32,7 @@ from cp_plotting import plot_global_tripod, plot_frame, \
 frame1 = Frame()
 frame1.translate(1,1,1)
 
-frame2 = Frame()
+# frame2 = Frame()
 
 p1 = Vertex(0,0,0)
 # p2 = Vertex(1,0,0)
@@ -44,14 +44,13 @@ p1 = Vertex(0,0,0)
 # f1 = Face(p1, p2, p3, p4, frame1)
 # f2 = Face(p1, p4, p5, p6, frame1)
 
-f1 = Face(Vertex(0,0,0), Vertex(1,0,0), Vertex(1,1,0), Vertex(0,1,0))
+f1 = Face(Vertex(0,0,0), Vertex(1,0,0), Vertex(1,1,0), Vertex(0,1,0), frame1)
 
+# f1.remove_parent()
 
+f1.delete()
 
-
-
-
-
+f1.readout()
 
 #%% ==== Plotting ====
 
