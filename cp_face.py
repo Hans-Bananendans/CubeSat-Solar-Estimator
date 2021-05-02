@@ -44,28 +44,7 @@ class Face:
         # If parent is not None, also add vertex to the parent as a child.
         if parent is not None: 
             self.parent.add_face(self)
-<<<<<<< HEAD
-            for vertex in [self.p1, self.p2, self.p3, self.p4]:
-                vertex.change_parent(parent)
-            
-            
-    def __del__(self):
-        """Custom deconstructor to clean up child-parent relationships."""
-        try:
-            for vertex in [self.p1, self.p2, self.p3, self.p4]:
-                vertex.__del__()
-            print("[DEBUG] Erasing c-p relation of {}".format(self))
-            
-            self.remove_parent()
 
-        finally:
-            print("[DEBUG] Deleting {}.".format(self))
-            del(self)
-    
-
-=======
-    
->>>>>>> parent of 03c393e (Pathetic failure of implementing functional destructors)
     def remove_parent(self):
         """If Vertex has a parent frame, removes it as a parent, and ensures 
            it is removed from the internal list in the frame.

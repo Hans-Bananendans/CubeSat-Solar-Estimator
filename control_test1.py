@@ -47,21 +47,6 @@ p1 = Vertex(0,0,0,frame1)
 f1 = Face(Vertex(0,0,0), Vertex(1,0,0), Vertex(1,1,0), Vertex(0,1,0))
 
 
-
-
-
-<<<<<<< HEAD
-# f1.remove_parent()
-frame1.readout()
-
-del(f1)
-# f1.__del__()
-frame1.readout()
-=======
-
-
->>>>>>> parent of 03c393e (Pathetic failure of implementing functional destructors)
-
 #%% ==== Plotting ====
 
 # Toggle plotting functionality:

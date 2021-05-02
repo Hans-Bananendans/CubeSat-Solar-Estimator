@@ -62,9 +62,9 @@ if True:
         
         # Transforming frame1
         if i < steps/2:
-            frame1.translate(2/steps,4/steps,4/steps)
+            frame1.translate(1/steps,2/steps,2/steps)
         else:
-            frame1.translate(2/steps,-4/steps,-4/steps)
+            frame1.translate(1/steps,-2/steps,-2/steps)
         frame1.rotate(0,-2*np.pi/steps,-2*np.pi/steps)
         # frame1.rotate(0,0,0)
         
@@ -75,9 +75,9 @@ if True:
         
         ax.set_title("Wireframe visualization. Frame: {}".format(str(i)))
         
-        ax.set_xlim(0, 2.5)
-        ax.set_ylim(0, 2.5)
-        ax.set_zlim(0, 2)
+        ax.set_xlim(0, 1.25)
+        ax.set_ylim(0, 1.25)
+        ax.set_zlim(0, 1)
         # ax.set_xlim(-1, 1)
         # ax.set_ylim(-1, 1)
         # ax.set_zlim(-1, 1)
