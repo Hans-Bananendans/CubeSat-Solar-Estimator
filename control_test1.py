@@ -32,7 +32,7 @@ from cp_plotting import plot_global_tripod, plot_frame, \
 frame1 = Frame()
 frame1.translate(1,1,1)
 
-# frame2 = Frame()
+frame2 = Frame()
 
 p1 = Vertex(0,0,0,frame1)
 # p2 = Vertex(1,0,0)
@@ -44,14 +44,23 @@ p1 = Vertex(0,0,0,frame1)
 # f1 = Face(p1, p2, p3, p4, frame1)
 # f2 = Face(p1, p4, p5, p6, frame1)
 
-f1 = Face(Vertex(0,0,0), Vertex(1,0,0), Vertex(1,1,0), Vertex(0,1,0), frame1)
+f1 = Face(Vertex(0,0,0), Vertex(1,0,0), Vertex(1,1,0), Vertex(0,1,0))
 
+
+
+
+
+<<<<<<< HEAD
 # f1.remove_parent()
 frame1.readout()
 
 del(f1)
 # f1.__del__()
 frame1.readout()
+=======
+
+
+>>>>>>> parent of 03c393e (Pathetic failure of implementing functional destructors)
 
 #%% ==== Plotting ====
 
