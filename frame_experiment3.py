@@ -96,7 +96,7 @@ if True:
         plot_global_tripod(ax, scaling=plotscale/2)
         
         # Plot tripod of frame1:
-        plot_frame(ax, frame1, tripod_scale=plotscale/8)
+        plot_frame(ax, frame1, tripod_scale=plotscale/8,facefill=False)
         plot_frame(ax, projection_frame, tripod_scale=plotscale/8,
                    facefill=False, linecolour="#AA2")
 

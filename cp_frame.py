@@ -20,54 +20,76 @@ from cp_vector import Vector
 class Frame:
     """Custom implentation of a 3D point expressed in cartesians."""
 
-    def __init__(self, x=0., y=0., z=0.):
-        self.x = x
-        self.y = y
-        self.z = z
+    def __init__(self, xyz: list = [0., 0., 0.], geometry=[]):
+        self.x = xyz[0]
+        self.y = xyz[1]
+        self.z = xyz[2]
         self.xdir = np.array([1,0,0])
         self.ydir = np.array([0,1,0])
         self.zdir = np.array([0,0,1])
         
-        self.dcm = None
-        self.recalculate_dcm()
+        self.parenttype = "global"
         
+        self.dcm = None
+        
+        self.vectors = []
         self.vertices = []
         self.faces = []
         self.geometries = []
-        self.vectors = []
+        self.add_geometry(geometry)
+        
+        print("[DEBUG] {} constructed.".format(self))
     
     def __del__(self):
         print("[DEBUG] {} destructed.".format(self))
 
+
     def add_vertex(self, vertex: Vertex):
         self.vertices.append(vertex)
+        vertex.set_parenttype="frame"
 
     def remove_vertex(self, vertex: Vertex):
         self.vertices.remove(vertex)
+        vertex.set_parenttype="global"
         
     def add_face(self, face: Face):
         """TODO: merge into one add_child method."""
         self.faces.append(face)
+        face.set_parenttype="frame"
 
     def remove_face(self, face: Face):
         """TODO: merge into one add_child method."""
         self.faces.remove(face)
+        face.set_parenttype="global"
 
-    def add_geometry(self, geometry: Geometry):
-        """TODO: merge into one add_child method."""
-        self.geometries.append(geometry)
+    def add_geometry(self, geometry):
+        if type(geometry) == Geometry:
+            self.geometries.append(geometry)
+        elif type(geometry) == list:
+            for geo in geometry:
+                if type(geo) == Geometry:
+                    self.geometries.append(geometry)
+                else:
+                    raise TypeError("Frame.add_geometry() argument must be a \
+                                    list of geometries!")
+        else:
+            raise TypeError("Invalid argument provided to \
+                            Frame.add_geometry()!")
 
     def remove_geometry(self, geometry: Geometry):
         """TODO: merge into one add_child method."""
         self.geometries.remove(geometry)
+        geometry.set_parenttype="global"
     
     def add_vector(self, vector: Vector):
         """TODO: merge into one add_child method."""
         self.vectors.append(vector)
+        vector.set_parenttype="frame"
 
     def remove_vector(self, vector: Vector):
         """TODO: merge into one add_child method."""
         self.vectors.remove(vector)
+        vector.set_parenttype="global"
     
     def origin(self):
         return np.array([self.x, self.y, self.z])
@@ -98,16 +120,16 @@ class Frame:
         """ 
         """
         Rx = np.array([[1,      0,       0],
-                        [0, cos(a), -sin(a)],
-                        [0, sin(a),  cos(a)]])
+                       [0, cos(a), -sin(a)],
+                       [0, sin(a),  cos(a)]])
         
         Ry = np.array([[ cos(b), 0, sin(b)],
-                        [      0, 1,      0],
-                        [-sin(b), 0, cos(b)]])
+                       [      0, 1,      0],
+                       [-sin(b), 0, cos(b)]])
         
         Rz = np.array([[cos(c), -sin(c), 0],
-                        [sin(c),  cos(c), 0],
-                        [     0,       0, 1]])
+                       [sin(c),  cos(c), 0],
+                       [     0,       0, 1]])
         
         for axis in reversed(seq):
             temp = (self.x, self.y, self.z)
@@ -129,6 +151,51 @@ class Frame:
             self.translate(1*temp[0], 1*temp[1], 1*temp[2])
         
         self.recalculate_dcm()
+        
+    def vertex_xyz_global(self, vertex: Vertex):
+        # Vertex coordinates in terms of parent frame
+        xyz_local = vertex.xyz()
+        
+        # Coordinates of local frame origin in terms of global frame
+        o_local = np.array([self.x, self.y, self.z])
+        
+        # Vertex coordinates in terms of global frame
+        xyz_global = np.dot(self.dcm, xyz_local) + o_local
+        
+        return xyz_global[0], xyz_global[1], xyz_global[2]
+    
+    def unique_vertices(self):
+        unique_vertices = []
+        for geometry in self.geometries:
+            unique_vertices.extend(geometry.unique_vertices())
+        return list(set(unique_vertices))
+    
+    def plotlist(self, face: Face):
+        """Return three lists with the x, y, and z-components of all four
+            vertices in the face."""
+        if self.parent == None:
+            uselocal = True
+        
+        if uselocal:
+            # Fetch local vertex coordinates, and apply them to global frame
+            xlist = [self.p1.x, self.p2.x, self.p3.x, self.p4.x]
+            ylist = [self.p1.y, self.p2.y, self.p3.y, self.p4.y]
+            zlist = [self.p1.z, self.p2.z, self.p3.z, self.p4.z]
+        else:
+            # Fetch global vertex coordinates, and apply them to global frame
+            xlist = [self.p1.global_coordinates()[0], 
+                      self.p2.global_coordinates()[0],
+                      self.p3.global_coordinates()[0],
+                      self.p4.global_coordinates()[0]]
+            ylist = [self.p1.global_coordinates()[1], 
+                      self.p2.global_coordinates()[1],
+                      self.p3.global_coordinates()[1],
+                      self.p4.global_coordinates()[1]]
+            zlist = [self.p1.global_coordinates()[2], 
+                      self.p2.global_coordinates()[2],
+                      self.p3.global_coordinates()[2],
+                      self.p4.global_coordinates()[2]]        
+        return xlist, ylist, zlist
     
     def readout(self, dec=4):
         """More detailed information about Vertex.
@@ -147,7 +214,7 @@ class Frame:
         
         print("Carthesian coordinate frame.")
         print("Frame origin: {}\n".format(origin))
-        print("Children: {}".format(children))
+        print("Children:              {}".format(children))
         print("Associated Vertices:   {}".format(len(self.vertices)))
         print("Associated Faces:      {}".format(len(self.faces)))
         print("Associated Geometries: {}".format(len(self.geometries)))

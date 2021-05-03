@@ -19,7 +19,6 @@ class Vector:
     TODO: Implement vector class.
     """
 
-    def __init__(self, head, tail=None, parent=None):
+    def __init__(self, head, tail=None, parenttype="global"):
         self.head = None # Vertex or None
         self.tail = None # Vertex or None
-        self.parent = None # Frame or None

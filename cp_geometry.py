@@ -23,56 +23,39 @@ class Geometry:
        others interact instead with the individual Vertices out of which
        the Faces are made, to avoid e.g. applying transformations more than
        once to the same Vertex object."""
+       
+    def __init__(self, faces: list = [], parenttype="global"):
 
-    def __init__(self, parent=None):
+        self.faces = []        
+        self.add_faces(faces)
         
-        self.faces = []
-
-        self.parent = parent
-        # If parent is not None, also add vertex to the parent as a child.
-        if parent is not None: 
-            self.parent.add_geometry(self)
+        self.parenttype=parenttype # Default: "global"
+        
+        print("[DEBUG] {} constructed.".format(self))
     
-    def remove_parent(self):
-        """If geometry has a parent frame, removes it as a parent, and 
-           ensures it is removed from the internal list in the frame.
-           
-           TODO: Garbage removal.
-           """
-        if self.parent is not None:
-            self.parent.remove_geometry(self)
-            self.parent = None
-
-        
-    def change_parent(self, new_parent):
-        """Connects geometry to another frame. If geometry was already 
-           attached to a frame, it undoes this first.
-           
-           TODO: Garbage removal
-           """
-        # Remove old parent first (if current parent is not None):
-        if self.parent is not None:
-            self.remove_parent()
-        
-        # Update parent in child
-        self.parent = new_parent
-        
-        # Edit new parent to add new child (unless new parent is None):
-        if new_parent is not None:
-            self.parent.add_geometry(self)
+    def __del__(self):
+        print("[DEBUG] {} destructed.".format(self))
     
+    def set_parenttype(self, new_parenttype):
+        if new_parenttype in ["global", "frame"]:
+            self.parent_type=new_parenttype
+        else:
+            raise ValueError("The parenttype cannot be anything other than: \
+                             'global', 'frame'!")
+                             
     def add_face(self, face: Face):
-        """Add a singular face to the geometry
-        
-        TODO: Garbage collection. """
+        """Add a singular face to the geometry."""
         self.faces.append(face)
+        face.set_parenttype("geometry")
 
     def add_faces(self, faces: list):
-        """Add a list of faces to the geometry
-        
-        TODO: Garbage collection. """
+        """Add a list of faces to the geometry."""
         for face in faces:
-            self.faces.append(face)
+            if type(face) == Face:
+                self.faces.append(face)
+                face.set_parenttype("geometry")
+            else:
+                raise TypeError("Geometries can only be made from faces!")
     
     def vertices(self):
         """This method loops through all the Face objects in the geometry,
@@ -92,10 +75,10 @@ class Geometry:
            """
         vertices = self.vertices()
         if len(vertices) != 8:
-            raise ValueError("Tried to use method find_cuboid_centroid() "
-                             "with a geometry containing {} vertices. "
-                             "All cuboids must have exactly 8 vertices."
-                             "".format(len(vertices)))
+            raise ValueError("Tried to use method find_cuboid_centroid() \
+                             with a geometry containing {} vertices. \
+                             All cuboids must have exactly 8 vertices. " \
+                             .format(len(vertices)))
         xc = 0
         yc = 0
         zc = 0
@@ -116,6 +99,12 @@ class Geometry:
         vertices = self.vertices()
         for vertex in vertices:
             vertex.translate(dx=dx, dy=dy, dz=dz)
+    
+    def unique_vertices(self):
+        unique_vertices = []
+        for face in self.faces:
+            unique_vertices.extend(face.vertices())
+        return list(set(unique_vertices))
             
     def rotate(self, a, b, c, cor, seq='321'):
         """Rotate all the vertices in the geometry around a point in space.

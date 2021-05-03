@@ -4,7 +4,7 @@ Created on Sat May 01 6:39:27 2021
 
 @author: Johan Monster
 
-Empty sandbox for testing Cube Projector functionality
+Sandbox for testing Cube Projector functionality
 
 """
 
@@ -34,7 +34,7 @@ frame1.translate(1,1,1)
 
 frame2 = Frame()
 
-p1 = Vertex(0,0,0,frame1)
+# p1 = Vertex(0,0,0,frame1)
 # p2 = Vertex(1,0,0)
 # p3 = Vertex(1,1,0)
 # p4 = Vertex(0,1,0)
@@ -44,7 +44,21 @@ p1 = Vertex(0,0,0,frame1)
 # f1 = Face(p1, p2, p3, p4, frame1)
 # f2 = Face(p1, p4, p5, p6, frame1)
 
-f1 = Face(Vertex(0,0,0), Vertex(1,0,0), Vertex(1,1,0), Vertex(0,1,0))
+frame1.readout()
+
+f1 = Face(Vertex(0,0,0),
+          Vertex(1,0,0),
+          Vertex(1,1,0),
+          Vertex(0,1,0),
+          frame1)
+
+frame1.readout()
+
+del(f1)
+
+frame1.readout()
+
+
 
 
 #%% ==== Plotting ====
