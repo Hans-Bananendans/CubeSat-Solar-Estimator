@@ -21,7 +21,6 @@ from cp_frame import Frame
 from cp_utilities import d2r#, r2d
 from cp_plotting import plot_global_tripod, plot_frame
 
-       
         
 p1 = Vertex([-0.05, -0.05, -0.1])
 p2 = Vertex([-0.05, -0.05,  0.1])
