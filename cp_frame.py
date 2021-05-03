@@ -35,6 +35,9 @@ class Frame:
         self.faces = []
         self.geometries = []
         self.vectors = []
+    
+    def __del__(self):
+        print("[DEBUG] {} destructed.".format(self))
 
     def add_vertex(self, vertex: Vertex):
         self.vertices.append(vertex)

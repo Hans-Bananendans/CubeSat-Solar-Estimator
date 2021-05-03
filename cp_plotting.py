@@ -21,25 +21,47 @@ from cp_vector import Vector
 from cp_frame import Frame
      
 def plot_vertex(axes: plt.matplotlib.axes, vertex: Vertex, 
-                colour="#000", size=10):
+                vertexfill = True,   # If False, vertex will not be plotted
+                vertexcolour="#000", # Specifies the vertex colour
+                vertexsize=10,       # Size of the plotted vertex
+                vertexalpha=1        # Opacity of the plotted vertex
+                ):
     
     # print("[DEBUG] Plotting {}".format(vertex))
     
-    # If vertex has no parent, use global frame:
-    if vertex.parent == None:
-        x_global, y_global, z_global = vertex.xyz()
-    else:
-        x_global, y_global, z_global = vertex.global_coordinates()
-    
-    axes.scatter(x_global, 
-                 y_global,
-                 z_global,
-                 c=colour, s=size)
+    # Check whether vertex should be plotted:
+    if vertexfill:
+        # If vertex has no parent, use global frame:
+        if vertex.parent == None:
+            x_global, y_global, z_global = vertex.xyz()
+        else:
+            x_global, y_global, z_global = vertex.global_coordinates()
+        
+        axes.scatter(x_global, 
+                     y_global,
+                     z_global,
+                     c=vertexcolour, s=vertexsize, alpha=vertexalpha)
 
 def plot_face(axes: plt.matplotlib.axes, face: Face, 
-              fill=1, alpha=0.9,
-              linecolour='black', linealpha=1,
-              illumination=False, ill_value=0):
+              # Face plotting properties:
+              linefill=True,        # If False, does not plot face lines
+              linecolour="#000",    # Colour of face lines
+              linewidth=2,          # Thickness of face lines
+              linealpha=1,          # Opacity of face lines
+              facefill=True,        # If False, does not shade the face area
+              facecolour="#000",    # Colour of the face area shading
+              facealpha=1,          # Opacity of the face area shading
+              
+              # Vertex plotting properties:
+              vertexfill = True,    # If False, vertex will not be plotted
+              vertexcolour="#000",  # Specifies the vertex colour
+              vertexsize=10,        # Size of the plotted vertex
+              vertexalpha=1 ,       # Opacity of the plotted vertex
+              
+              # Illumination:
+              illumination=False,   # If True, plots illumination intensity
+              ill_value=0           # Used to plot illumination intensity
+              ):
     """ Plots an individual Face object. Check source code for kwargs.
     """
     
@@ -56,17 +78,36 @@ def plot_face(axes: plt.matplotlib.axes, face: Face,
         axes.plot3D([xlist[i], xlist[i + 1]],
                     [ylist[i], ylist[i + 1]],
                     [zlist[i], zlist[i + 1]],
-                    linecolour, alpha=linealpha, lw=2)
+                    linecolour, alpha=linealpha, lw=linewidth)
 
     # Plot the face surface:
-    if fill == 1:
+    if facefill == 1:
 
         fs = mp3d.art3d.Poly3DCollection([face.plotlist2()],
                                          linewidth=0)
-        fs.set_facecolor((0.1, 0.1, 0.1, alpha))
+        fs.set_facecolor((0.1, 0.1, 0.1, facealpha))
         axes.add_collection3d(fs)
         
-def plot_geometry(axes: plt.matplotlib.axes, geometry: Geometry):
+def plot_geometry(axes: plt.matplotlib.axes, geometry: Geometry,
+                  # Face plotting properties:
+                  linefill=True,        # If False, does not plot face lines
+                  linecolour="#000",    # Colour of face lines
+                  linewidth=2,          # Thickness of face lines
+                  linealpha=1,          # Opacity of face lines
+                  facefill=True,        # If False, does not shade the face area
+                  facecolour="#000",    # Colour of the face area shading
+                  facealpha=1,          # Opacity of the face area shading
+                  
+                  # Vertex plotting properties:
+                  vertexfill = True,    # If False, vertex will not be plotted
+                  vertexcolour="#000",  # Specifies the vertex colour
+                  vertexsize=10,        # Size of the plotted vertex
+                  vertexalpha=1 ,       # Opacity of the plotted vertex
+                  
+                  # Illumination:
+                  illumination=False,   # If True, plots illumination intensity
+                  ill_value=0           # Used to plot illumination intensity
+                  ):
     """Plots an individual Face object. Check source code for kwargs."""
     
     # print("[DEBUG] Plotting {}".format(geometry))
@@ -141,7 +182,36 @@ def plot_frame_tripod(axes: plt.matplotlib.axes, frame: Frame,
               arrow_length_ratio=0.15, color='blue', alpha=alpha)
 
 def plot_frame(axes: plt.matplotlib.axes, frame: Frame, 
-               show_tripod=True, tripod_scale=1):
+               # Tripod properties
+               show_tripod=True,     # If False, does not plot the tripod
+               tripod_scale=1,       # Sets the scale of the tripod
+               
+               # Face plotting properties:
+               linefill=True,        # If False, does not plot face lines
+               linecolour="#000",    # Colour of face lines
+               linewidth=2,          # Thickness of face lines
+               linealpha=1,          # Opacity of face lines
+               facefill=True,        # If False, does not shade the face area
+               facecolour="#000",    # Colour of the face area shading
+               facealpha=1,          # Opacity of the face area shading
+              
+               # Vertex plotting properties:
+               vertexfill = True,    # If False, vertex will not be plotted
+               vertexcolour="#000",  # Specifies the vertex colour
+               vertexsize=10,        # Size of the plotted vertex
+               vertexalpha=1,        # Opacity of the plotted vertex
+              
+               # Illumination:
+               illumination=False,   # If True, plots illumination intensity
+               ill_value=0,          # Used to plot illumination intensity
+               
+               # Vector plotting properties:
+               vectorfill=True,      # If False, does not plot vector arrow
+               vectorcolour="#000",  # Colour of vector arrow
+               vectoralpha=1,        # Opacity of vector arrow
+               vectorscaling=1,      # Scale the whole vector by a constant
+               vectorratio=0.15      # Vector arrow length ratio
+               ):
     
     if show_tripod:
         plot_frame_tripod(axes, frame, scaling=tripod_scale)
@@ -158,7 +228,15 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
         
         # Plot the geometries first
         for geometry in frame.geometries:
-            plot_geometry(axes, geometry)
+            plot_geometry(axes, geometry,
+                          linefill=linefill, linecolour=linecolour,
+                          linewidth=linewidth, linealpha=linealpha,
+                          facefill=facefill,facecolour=facecolour,
+                          facealpha=facealpha,
+                          vertexfill = vertexfill, vertexcolour=vertexcolour,
+                          vertexsize=vertexsize,vertexalpha=vertexalpha, 
+                          illumination=illumination,ill_value=ill_value
+                          )
             # Mark all faces in the geometry as plotted
             for face in geometry.faces:
                 plotted_faces.append(face)
@@ -169,7 +247,15 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
         # Find faces in the frame that do not belong to any geometry
         for face in set(frame.faces).difference(set(plotted_faces)):
             # Plot these faces too
-            plot_face(axes, face)
+            plot_face(axes, face,
+                      linefill=linefill, linecolour=linecolour,
+                      linewidth=linewidth, linealpha=linealpha,
+                      facefill=facefill,facecolour=facecolour,
+                      facealpha=facealpha,
+                      vertexfill = vertexfill, vertexcolour=vertexcolour,
+                      vertexsize=vertexsize,vertexalpha=vertexalpha, 
+                      illumination=illumination,ill_value=ill_value
+                      )
             # Then mark all vertices in these faces as plotted too
             for vertex in face.vertices():
                     plotted_vertices.append(vertex)
@@ -177,8 +263,10 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
         # Find the vertices in the frame that do not belong to any faces
         for vertex in set(frame.vertices).difference(set(plotted_vertices)):
             # Then plot these too
-            plot_vertex(axes, vertex)
-        
+            plot_vertex(axes, vertex,
+                        vertexfill = vertexfill, vertexcolour=vertexcolour,
+                        vertexsize=vertexsize,vertexalpha=vertexalpha
+                        )
         # By now, all geometries, faces, and vertices in the frame should
         # have been plotted.
             
@@ -193,7 +281,15 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
         
         # Plot all faces first
         for face in frame.faces:
-            plot_face(axes, face)
+            plot_face(axes, face,
+                      linefill=linefill, linecolour=linecolour,
+                      linewidth=linewidth, linealpha=linealpha,
+                      facefill=facefill,facecolour=facecolour,
+                      facealpha=facealpha,
+                      vertexfill = vertexfill, vertexcolour=vertexcolour,
+                      vertexsize=vertexsize,vertexalpha=vertexalpha, 
+                      illumination=illumination,ill_value=ill_value
+                      )
             # Then mark all vertices in these faces as plotted
             for vertex in face.vertices():
                     plotted_vertices.append(vertex)
@@ -201,15 +297,23 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
         # Find the vertices in the frame that do not belong to any faces
         for vertex in set(frame.vertices).difference(set(plotted_vertices)):
             # Then plot these too
-            plot_vertex(axes, vertex)
-        
+            plot_vertex(axes, vertex,
+                        vertexfill = vertexfill, vertexcolour=vertexcolour,
+                        vertexsize=vertexsize,vertexalpha=vertexalpha
+                        )
         # By now, all faces and vertices in the frame should be plotted.
            
-    elif frame.vertices:
+    elif not frame.geometries and not frame.faces and frame.vertices:
+        """If frame contains no geometries nor faces, but does contain some
+        vertices, plot these.
+        """
         for vertex in frame.vertices:
-            plot_vertex(axes, vertex)
-    
+            plot_vertex(axes, vertex,
+                        vertexfill = vertexfill, vertexcolour=vertexcolour,
+                        vertexsize=vertexsize,vertexalpha=vertexalpha
+                        )
     else:
+        """In other cases, do nothing."""
         pass
     
     # Plot all vectors in frame too

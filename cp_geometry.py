@@ -64,13 +64,13 @@ class Geometry:
     def add_face(self, face: Face):
         """Add a singular face to the geometry
         
-        TODO: Cascade management. """
+        TODO: Garbage collection. """
         self.faces.append(face)
 
     def add_faces(self, faces: list):
         """Add a list of faces to the geometry
         
-        TODO: Cascade management. """
+        TODO: Garbage collection. """
         for face in faces:
             self.faces.append(face)
     

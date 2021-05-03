@@ -34,12 +34,14 @@ if True:
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
     ax.view_init(elev=20, azim=-60)
     
-    steps = 4
+    steps = 40
     angle_step = d2r(360/steps)
     
     frame1 = Frame()
+    frame1.translate(0.5,0.5,0.5)
+    frame1.rotate(0,0,d2r(1*360/12))
 
-    projection_frame = Frame()
+
     
     p1 = Vertex(-0.05, -0.05, -0.1, frame1)
     p2 = Vertex(-0.05, -0.05, 0.1, frame1)
@@ -63,14 +65,13 @@ if True:
     def update(i):
         
         # Transforming frame1
-        if i < steps/2:
-            frame1.translate(1/steps,2/steps,2/steps)
-        else:
-            frame1.translate(1/steps,-2/steps,-2/steps)
-        frame1.rotate(0,-2*np.pi/steps,-2*np.pi/steps)
-        # frame1.rotate(0,0,0)
+        cubesat.rotate(angle_step,0,0,cor=cubesat.make_cuboid_centroid())
         
-        # vertex1.rotate(2*np.pi/steps,0,0, cor=vertex2)
+        projection_frame = Frame()
+        
+        for face in cubesat.faces:
+            face.project(new_frame=projection_frame, plane='xz') 
+        
         
         print("[DEBUG] Plotting frame {}".format(i))
         
@@ -96,12 +97,14 @@ if True:
         
         # Plot tripod of frame1:
         plot_frame(ax, frame1, tripod_scale=plotscale/8)
+        plot_frame(ax, projection_frame, tripod_scale=plotscale/8,
+                   facefill=False, linecolour="#AA2")
 
         
         # Plot vertex1
         # plot_vertex(ax, vertex1)
 
     ani = animation.FuncAnimation(fig, update, np.arange(1,steps), 
-                                  interval = 75, repeat = False)
+                                  interval = 75, repeat = True)
 
     plt.show()

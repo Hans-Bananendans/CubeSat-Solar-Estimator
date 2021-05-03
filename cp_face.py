@@ -10,7 +10,7 @@ Version: 2.0
 """
 
 import numpy as np
-
+from copy import deepcopy
 from cp_vertex import Vertex
 
 class Face:
@@ -56,7 +56,6 @@ class Face:
             self.parent.remove_face(self)
             # Fetch list of faces from parent.faces
             self.parent = None
-
         
     def change_parent(self, new_parent):
         """Connects vertex to another frame. If vertex was already attached 
@@ -97,6 +96,7 @@ class Face:
         return facearea
     
     def vertices(self):
+        """Returns a list of the four vertices spanning the face."""
         return [self.p1, self.p2, self.p3, self.p4]
 
     def readout(self, dec=4):
@@ -147,27 +147,40 @@ class Face:
                               self.p3.xyz_global(), self.p4.xyz_global()])
         return grid1.tolist()
     
-    # def project(self, plane='xy'):
-    #     """Project a copy of the frame onto a plane that is spanned by two
-    #        axes. The projection is orthographic.
-    #        TODO: Generalize this function for arbitrary projection frame. """
-    #     pj = deepcopy(self)
-    #     for vertex in [pj.p1, pj.p2, pj.p3, pj.p4]:
-    #         vertex.remove_parent()
-    #         if plane == 'xy':
-    #             vertex.z = 0
-    #         elif plane == 'xz':
-    #             vertex.y = 0
-    #         elif plane == 'yz':
-    #             vertex.x = 0
-    #         else:
-    #             raise ValueError("No valid projection plane given to "
-    #                              "projection method! "
-    #                              "Valid options: 'xy', 'xz', 'yz'")
-    #     # Reinitialize the face with the projected vertices.
-    #     pj = Face(pj.p1, pj.p2, pj.p3, pj.p4, pj.parent)
-    #     pj.remove_parent()
-    #     return pj
+    def project(self, new_frame=None, plane='xy'):
+        """Project a copy of the frame onto a plane that is spanned by two
+            axes. The projection is orthographic.
+            
+            A "new_frame" can be specified, which will make the projection
+            elements children of this frame. Otherwise, the elements will be
+            children of the global coordinate frame.
+            
+            TODO: Generalize this function for arbitrary projection frame. """
+        pj_xyz = []
+        
+        for vertex in [self.p1, self.p2, self.p3, self.p4]:
+            if plane == 'xy':
+                pj_x = vertex.xyz_global()[0]
+                pj_y = vertex.xyz_global()[1]
+                pj_z = 0
+            elif plane == 'xz':
+                pj_x = vertex.xyz_global()[0]
+                pj_y = 0
+                pj_z = vertex.xyz_global()[2]
+            elif plane == 'yz':
+                pj_x = 0
+                pj_y = vertex.xyz_global()[1]
+                pj_z = vertex.xyz_global()[2]
+            else:
+                raise ValueError("No valid projection plane given to "
+                                  "projection method! "
+                                  "Valid options: 'xy', 'xz', 'yz'")
+            pj_xyz.append(Vertex(pj_x, pj_y, pj_z, new_frame))
+        
+        # Create the projected face using the projected vertices.
+        pj = Face(pj_xyz[0], pj_xyz[1], pj_xyz[2], pj_xyz[3], new_frame)
+
+        return pj
             
     def find_centroid(self):
         """Find the vertex centroid of the face."""
