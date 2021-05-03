@@ -23,6 +23,8 @@ from cp_frame import Frame
 def plot_vertex(axes: plt.matplotlib.axes, vertex: Vertex, 
                 colour="#000", size=10):
     
+    # print("[DEBUG] Plotting {}".format(vertex))
+    
     # If vertex has no parent, use global frame:
     if vertex.parent == None:
         x_global, y_global, z_global = vertex.xyz()
@@ -40,10 +42,14 @@ def plot_face(axes: plt.matplotlib.axes, face: Face,
               illumination=False, ill_value=0):
     """ Plots an individual Face object. Check source code for kwargs.
     """
+    
+    # print("[DEBUG] Plotting {}".format(face))
+    
     (xlist, ylist, zlist) = face.plotlist()
 
     # Plot individual vertices:
-    # axes.scatter(xlist, ylist, zlist, c=linecolour, s=10)
+    for vertex in face.vertices():
+        plot_vertex(axes, vertex)
 
     # Plot edges that connect vertices:
     for i in range(-1, len(xlist) - 1):
@@ -60,6 +66,18 @@ def plot_face(axes: plt.matplotlib.axes, face: Face,
         fs.set_facecolor((0.1, 0.1, 0.1, alpha))
         axes.add_collection3d(fs)
         
+def plot_geometry(axes: plt.matplotlib.axes, geometry: Geometry):
+    """Plots an individual Face object. Check source code for kwargs."""
+    
+    # print("[DEBUG] Plotting {}".format(geometry))
+    
+    for face in geometry.faces:
+        plot_face(axes, face)
+
+def plot_vector(axes: plt.matplotlib.axes, vector: Vector):
+    """Plots an individual vector object.."""
+    pass
+
 # def plot_geometry(axes: plt.matplotlib.axes, geometry: Geometry, 
 #                   fill=0, alpha=0.2,
 #                   linecolour='black', linealpha=1,
@@ -122,16 +140,81 @@ def plot_frame_tripod(axes: plt.matplotlib.axes, frame: Frame,
                 sc*frame.zdir[0], sc*frame.zdir[1], sc*frame.zdir[2],
               arrow_length_ratio=0.15, color='blue', alpha=alpha)
 
-def plot_frame(axes: plt.matplotlib.axes, frame: Frame, show_tripod=True):
+def plot_frame(axes: plt.matplotlib.axes, frame: Frame, 
+               show_tripod=True, tripod_scale=1):
     
     if show_tripod:
-        plot_frame_tripod(axes, frame, scaling=0.25)
+        plot_frame_tripod(axes, frame, scaling=tripod_scale)
     
-    for vertex in frame.vertices:
-        plot_vertex(axes, vertex)
+    if frame.geometries:
+        """If frame contains geometries, plot these. Then find out if there
+           are any leftover edges and vertices associated with the frame, plot
+           these too.
+           """
+        
+        # Keep track of plotted faces and vertices
+        plotted_faces = []
+        plotted_vertices = []
+        
+        # Plot the geometries first
+        for geometry in frame.geometries:
+            plot_geometry(axes, geometry)
+            # Mark all faces in the geometry as plotted
+            for face in geometry.faces:
+                plotted_faces.append(face)
+                # Mark all vertices in these faces as plotted
+                for vertex in face.vertices():
+                    plotted_vertices.append(vertex)
+        
+        # Find faces in the frame that do not belong to any geometry
+        for face in set(frame.faces).difference(set(plotted_faces)):
+            # Plot these faces too
+            plot_face(axes, face)
+            # Then mark all vertices in these faces as plotted too
+            for vertex in face.vertices():
+                    plotted_vertices.append(vertex)
+        
+        # Find the vertices in the frame that do not belong to any faces
+        for vertex in set(frame.vertices).difference(set(plotted_vertices)):
+            # Then plot these too
+            plot_vertex(axes, vertex)
+        
+        # By now, all geometries, faces, and vertices in the frame should
+        # have been plotted.
+            
+    elif not frame.geometries and frame.faces:
+        """If frame contains no geometries, but does contain faces, plot
+           these faces. Then find out if there are any leftover vertices in
+           the frame, and plot these too.
+           """
+           
+        # Keep track of plotted vertices
+        plotted_vertices = []
+        
+        # Plot all faces first
+        for face in frame.faces:
+            plot_face(axes, face)
+            # Then mark all vertices in these faces as plotted
+            for vertex in face.vertices():
+                    plotted_vertices.append(vertex)
+        
+        # Find the vertices in the frame that do not belong to any faces
+        for vertex in set(frame.vertices).difference(set(plotted_vertices)):
+            # Then plot these too
+            plot_vertex(axes, vertex)
+        
+        # By now, all faces and vertices in the frame should be plotted.
+           
+    elif frame.vertices:
+        for vertex in frame.vertices:
+            plot_vertex(axes, vertex)
     
-    for face in frame.faces:
-        plot_face(axes, face)
+    else:
+        pass
+    
+    # Plot all vectors in frame too
+    for vector in frame.vectors:
+        plot_vector(axes, vector)
 
 def plot_global_tripod(axes: plt.matplotlib.axes, alpha=1, scaling=1.):
     """Plots an rgb xyz tripod at the global origin.

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue April 27 15:02:11 2021
+Created on Mon May  3 08:57:58 2021
 
 @author: Johan Monster
 
-Frame experiment 2
+Frame experiment 3
 """
 
 import numpy as np
@@ -34,7 +34,7 @@ if True:
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
     ax.view_init(elev=20, azim=-60)
     
-    steps = 128
+    steps = 4
     angle_step = d2r(360/steps)
     
     frame1 = Frame()
@@ -57,6 +57,8 @@ if True:
     fE = Face(p1, p2, p6, p5, frame1)
     fF = Face(p5, p6, p7, p8, frame1)
     
+    cubesat = Geometry(frame1)
+    cubesat.add_faces([fA, fB, fC, fD, fE, fF])
     
     def update(i):
         
@@ -69,6 +71,8 @@ if True:
         # frame1.rotate(0,0,0)
         
         # vertex1.rotate(2*np.pi/steps,0,0, cor=vertex2)
+        
+        print("[DEBUG] Plotting frame {}".format(i))
         
         # Setting up the axes object
         ax.clear()
