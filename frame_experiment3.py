@@ -39,7 +39,7 @@ if True:
     
     frame1 = Frame()
     frame1.translate(0.5,0.5,0.5)
-    frame1.rotate(0,0,d2r(1*360/12))
+    frame1.rotate(0,d2r(7*360/12),d2r(1*360/12))
 
 
     
@@ -96,7 +96,7 @@ if True:
         plot_global_tripod(ax, scaling=plotscale/2)
         
         # Plot tripod of frame1:
-        plot_frame(ax, frame1, tripod_scale=plotscale/8)
+        plot_frame(ax, frame1, tripod_scale=plotscale/8,facealpha=0.3)
         plot_frame(ax, projection_frame, tripod_scale=plotscale/8,
                    facefill=False, linecolour="#AA2")
 
