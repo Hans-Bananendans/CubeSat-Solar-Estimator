@@ -31,36 +31,37 @@ class Frame:
         self.parenttype = "global"
         
         self.dcm = None
+        self.recalculate_dcm()
         
-        self.vectors = []
-        self.vertices = []
-        self.faces = []
+        # self.vectors = []
+        # self.vertices = []
+        # self.faces = []
         self.geometries = []
         self.add_geometry(geometry)
         
-        print("[DEBUG] {} constructed.".format(self))
+        # print("[DEBUG] {} constructed.".format(self))
     
-    def __del__(self):
-        print("[DEBUG] {} destructed.".format(self))
+    # def __del__(self):
+    #     print("[DEBUG] {} destructed.".format(self))
 
 
-    def add_vertex(self, vertex: Vertex):
-        self.vertices.append(vertex)
-        vertex.set_parenttype="frame"
+    # def add_vertex(self, vertex: Vertex):
+    #     self.vertices.append(vertex)
+    #     vertex.set_parenttype="frame"
 
-    def remove_vertex(self, vertex: Vertex):
-        self.vertices.remove(vertex)
-        vertex.set_parenttype="global"
+    # def remove_vertex(self, vertex: Vertex):
+    #     self.vertices.remove(vertex)
+    #     vertex.set_parenttype="global"
         
-    def add_face(self, face: Face):
-        """TODO: merge into one add_child method."""
-        self.faces.append(face)
-        face.set_parenttype="frame"
+    # def add_face(self, face: Face):
+    #     """TODO: merge into one add_child method."""
+    #     self.faces.append(face)
+    #     face.set_parenttype="frame"
 
-    def remove_face(self, face: Face):
-        """TODO: merge into one add_child method."""
-        self.faces.remove(face)
-        face.set_parenttype="global"
+    # def remove_face(self, face: Face):
+    #     """TODO: merge into one add_child method."""
+    #     self.faces.remove(face)
+    #     face.set_parenttype="global"
 
     def add_geometry(self, geometry):
         if type(geometry) == Geometry:
@@ -81,15 +82,15 @@ class Frame:
         self.geometries.remove(geometry)
         geometry.set_parenttype="global"
     
-    def add_vector(self, vector: Vector):
-        """TODO: merge into one add_child method."""
-        self.vectors.append(vector)
-        vector.set_parenttype="frame"
+    # def add_vector(self, vector: Vector):
+    #     """TODO: merge into one add_child method."""
+    #     self.vectors.append(vector)
+    #     vector.set_parenttype="frame"
 
-    def remove_vector(self, vector: Vector):
-        """TODO: merge into one add_child method."""
-        self.vectors.remove(vector)
-        vector.set_parenttype="global"
+    # def remove_vector(self, vector: Vector):
+    #     """TODO: merge into one add_child method."""
+    #     self.vectors.remove(vector)
+    #     vector.set_parenttype="global"
     
     def origin(self):
         return np.array([self.x, self.y, self.z])
@@ -116,9 +117,8 @@ class Frame:
         self.y += dy
         self.z += dz
 
-    def rotate(self, a, b, c, seq='321'):
-        """ 
-        """
+    def rotate(self, a, b, c, cor=None, seq='321'):
+        """TODO: Implement Centre of Rotation functionality."""
         Rx = np.array([[1,      0,       0],
                        [0, cos(a), -sin(a)],
                        [0, sin(a),  cos(a)]])
@@ -152,9 +152,18 @@ class Frame:
         
         self.recalculate_dcm()
         
-    def vertex_xyz_global(self, vertex: Vertex):
-        # Vertex coordinates in terms of parent frame
-        xyz_local = vertex.xyz()
+    def vertex_xyz_global(self, vertex):
+        """Vertex coordinates in terms of parent frame."""
+        
+        # If vertex object was given:
+        if type(vertex) == Vertex:
+            xyz_local = vertex.xyz()
+        elif type(vertex) == list or type(vertex) == np.ndarray:
+            if len(vertex) == 3:
+                xyz_local = np.array(vertex)
+        else:
+            raise TypeError("Function vertex_xyz_global does not accept \
+                            arguments of this type!")
         
         # Coordinates of local frame origin in terms of global frame
         o_local = np.array([self.x, self.y, self.z])
@@ -162,40 +171,121 @@ class Frame:
         # Vertex coordinates in terms of global frame
         xyz_global = np.dot(self.dcm, xyz_local) + o_local
         
-        return xyz_global[0], xyz_global[1], xyz_global[2]
+        # return xyz_global[0], xyz_global[1], xyz_global[2]
+        return xyz_global
     
-    def unique_vertices(self):
-        unique_vertices = []
+    def geometry_vertices(self):
+        geometry_vertices = []
         for geometry in self.geometries:
-            unique_vertices.extend(geometry.unique_vertices())
-        return list(set(unique_vertices))
+            geometry_vertices.extend(geometry.vertices())
+        return list(set(geometry_vertices))
     
     def plotlist(self, face: Face):
         """Return three lists with the x, y, and z-components of all four
-            vertices in the face."""
-        if self.parent == None:
-            uselocal = True
+           vertices in the face."""
         
-        if uselocal:
-            # Fetch local vertex coordinates, and apply them to global frame
-            xlist = [self.p1.x, self.p2.x, self.p3.x, self.p4.x]
-            ylist = [self.p1.y, self.p2.y, self.p3.y, self.p4.y]
-            zlist = [self.p1.z, self.p2.z, self.p3.z, self.p4.z]
-        else:
-            # Fetch global vertex coordinates, and apply them to global frame
-            xlist = [self.p1.global_coordinates()[0], 
-                      self.p2.global_coordinates()[0],
-                      self.p3.global_coordinates()[0],
-                      self.p4.global_coordinates()[0]]
-            ylist = [self.p1.global_coordinates()[1], 
-                      self.p2.global_coordinates()[1],
-                      self.p3.global_coordinates()[1],
-                      self.p4.global_coordinates()[1]]
-            zlist = [self.p1.global_coordinates()[2], 
-                      self.p2.global_coordinates()[2],
-                      self.p3.global_coordinates()[2],
-                      self.p4.global_coordinates()[2]]        
+        xlist = []
+        ylist = []
+        zlist = []
+        
+        for vertex in face.vertices():
+            xg, yg, zg = self.vertex_xyz_global(vertex)
+            xlist.append(xg)
+            ylist.append(yg)
+            zlist.append(zg)
+        
         return xlist, ylist, zlist
+    
+    def plotlist_xyz(self, face: Face):
+        """Return a list of lists with the xyz coordinates of each vertex."""
+        # If object has no parent, return plot list in terms of global frame:
+        
+        plotlist_xyz = []
+        
+        for vertex in face.vertices():
+            plotlist_xyz.append(list(self.vertex_xyz_global(vertex)))
+
+        return plotlist_xyz
+    
+    def face_perpendicular(self, face: Face, scale=1.):
+        
+        p1 = self.vertex_xyz_global(face.p1)
+        p2 = self.vertex_xyz_global(face.p2)
+        p4 = self.vertex_xyz_global(face.p4)
+        
+        perpendicular = np.cross(p2-p1, p4-p1)
+        return perpendicular / np.linalg.norm(perpendicular)
+    
+    def geometry_perpendiculars(self, geometry: Geometry, scale=1.):
+        """Returns a list with a vector perpendicular to each face in the
+            geometry. If scale=1, these vectors will be unit vectors.
+            
+            TODO: Guarantee that all perpendiculars point away from the 
+            centre of the geometry, so that the output is not a mishmash of
+            inward and outward pointing vertices. Can achieve this by taking
+            inner product of:
+                - vector pointing from geometry centroid to Face centroid.
+                - computed perpendicular vector for given face.
+            If the result is positive, the perpendicular is pointing away from 
+            geometry, and if result is negative, flip the perpendicular.
+            Downside: Does not work well for concave geometries whose centroid
+            is outside the geometry boundaries.
+            """
+        perpendiculars = []
+        for face in geometry.faces:
+            perp = self.face_perpendicular(face)
+            perpendiculars.append(perp * scale)
+
+        # Code that ensures arrows point outwards (TODO):
+        # ...
+
+        return perpendiculars
+    
+    def face_centroid(self, face: Face):
+        """Find the vertex centroid of the face."""
+        
+        xc = 0
+        yc = 0
+        zc = 0
+        
+        for vertex in face.vertices():
+            (dx, dy, dz) = self.vertex_xyz_global(vertex)
+            xc += 0.25*dx
+            yc += 0.25*dy
+            zc += 0.25*dz
+    
+        return np.array([xc, yc, zc])
+    
+    def geometry_face_centroids(self, geometry: Geometry):
+        """Find the vertex centroid of the face."""
+        face_centroids = []
+        for face in geometry.faces:
+            face_centroids.append(self.face_centroid(face))
+        return np.array(face_centroids)
+    # def make_centroid(self):
+    #     """Find the vertex centroid of the face, and turn it into a Vertex."""
+    #     (xc, yc, zc) = self.find_centroid()
+    #     return Vertex(xc, yc, zc, parenttype="face")
+    
+    def perpendiculars_plotlist(self, geometry: Geometry, scale=.1):
+        """Returns a list of lists with coordinates used for plotting.
+            Each item in the list is a list of six coordinates:
+            - The first three coordinates indicate the xyz of the tail point.
+            - The second three coordinates are point a vector from this tail
+              point.
+              
+            TODO: Pass scaling as argument.
+            """
+        c = self.geometry_face_centroids(geometry)
+        p = self.geometry_perpendiculars(geometry, scale)  # Note: 0.05
+
+        if len(c) != len(p):
+            raise ValueError("Number of centroids and perpendiculars is "
+                              "somehow unequal! This should not happen.")
+
+        # Generate plotarray, which is structured as [xyzuvw1, xyzuvw2, ...]
+        plotarray = np.hstack([np.vstack(c), np.vstack(p)]).transpose()
+        return plotarray.tolist()
     
     def readout(self, dec=4):
         """More detailed information about Vertex.
@@ -207,15 +297,15 @@ class Frame:
         else:
             origin = np.round(self.origin(), dec)
         
-        children = len(self.vertices)   + \
-                   len(self.faces)      + \
-                   len(self.geometries) + \
-                   len(self.vectors)
+        # children = len(self.vertices)   + \
+        #            len(self.faces)      + \
+        #            len(self.geometries) + \
+        #            len(self.vectors)
         
         print("Carthesian coordinate frame.")
         print("Frame origin: {}\n".format(origin))
-        print("Children:              {}".format(children))
-        print("Associated Vertices:   {}".format(len(self.vertices)))
-        print("Associated Faces:      {}".format(len(self.faces)))
+        # print("Children:              {}".format(children))
+        # print("Associated Vertices:   {}".format(len(self.vertices)))
+        # print("Associated Faces:      {}".format(len(self.faces)))
         print("Associated Geometries: {}".format(len(self.geometries)))
-        print("Associated Vectors:    {}".format(len(self.vectors)))
+        # print("Associated Vectors:    {}".format(len(self.vectors)))

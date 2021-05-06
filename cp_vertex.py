@@ -28,15 +28,15 @@ class Vertex:
         self.y = xyz[1]
         self.z = xyz[2]
         self.parenttype=parenttype
- 
-    def __del__(self):
-        print("[DEBUG] Deleting {}.".format(self))
         
-
-    
+        # print("[DEBUG] {} constructed.".format(self))
+        
+    # def __del__(self):
+        # print("[DEBUG] Deleting {}.".format(self))
+        
     def set_parenttype(self, new_parenttype):
         if new_parenttype in ["global", "frame", "geometry", "face"]:
-            self.parent_type=new_parenttype
+            self.parenttype=new_parenttype
         else:
             raise ValueError("The parenttype cannot be anything other than: \
                              'global', 'frame', 'geometry', 'face'!")
@@ -55,7 +55,17 @@ class Vertex:
             cor is the centre of rotation, which MUST be specified as
                 a vertex.
         """
-
+        
+        # COR argument handling:
+        if type(cor) == list or type(cor) == np.array:
+            if len(cor) == 3:
+                cor = Vertex(list(cor))
+        elif type(cor) == Vertex:
+            pass
+        else:
+            raise TypeError("Error when rotating vertex. Centre of rotation \
+                            argument not provided correctly!")
+        
         Rx = np.array([[1,      0,       0],
                        [0, cos(a), -sin(a)],
                        [0, sin(a),  cos(a)]])

@@ -48,20 +48,21 @@ class Face:
             raise ValueError("Error! Set of four points is not coplanar!")
 
         
-        print("[DEBUG] {} deconstructed..".format(self))
+        # print("[DEBUG] {} constructed.".format(self))
         
-    def __del__(self):
-        """Custom deconstructor to clean up child-parent relationships."""
+    # def __del__(self):
+    #     """Custom deconstructor to clean up child-parent relationships."""
         
         # for vertex in [self.p1, self.p2, self.p3, self.p4]:
         #     del(vertex)
         # print("[DEBUG] Erasing c-p relation of {}".format(self))
     
-        print("[DEBUG] {} deconstructed..".format(self))
+        # print("[DEBUG] {} deconstructed..".format(self))
 
     def set_parenttype(self, new_parenttype):
         if new_parenttype in ["global", "frame", "geometry"]:
-            self.parent_type=new_parenttype
+            self.parenttype=new_parenttype
+            
         else:
             raise ValueError("The parenttype cannot be anything other than: \
                              'global', 'frame', 'geometry'!")
@@ -106,36 +107,23 @@ class Face:
         for vertex in [self.p1, self.p2, self.p3, self.p4]:
             vertex.xyz()
     
-    """MOVE TO FRAME!"""
-    # def plotlist(self, uselocal=False):
-    #     """Return three lists with the x, y, and z-components of all four
-    #        vertices in the face."""
-    #     if self.parent == None:
-    #         uselocal = True
+    def plotlist_local(self):
+        """Return three lists with the x, y, and z-components of all four
+            vertices in the face."""
         
-    #     if uselocal:
-    #         # Fetch local vertex coordinates, and apply them to global frame
-    #         xlist = [self.p1.x, self.p2.x, self.p3.x, self.p4.x]
-    #         ylist = [self.p1.y, self.p2.y, self.p3.y, self.p4.y]
-    #         zlist = [self.p1.z, self.p2.z, self.p3.z, self.p4.z]
-    #     else:
-    #         # Fetch global vertex coordinates, and apply them to global frame
-    #         xlist = [self.p1.global_coordinates()[0], 
-    #                  self.p2.global_coordinates()[0],
-    #                  self.p3.global_coordinates()[0],
-    #                  self.p4.global_coordinates()[0]]
-    #         ylist = [self.p1.global_coordinates()[1], 
-    #                  self.p2.global_coordinates()[1],
-    #                  self.p3.global_coordinates()[1],
-    #                  self.p4.global_coordinates()[1]]
-    #         zlist = [self.p1.global_coordinates()[2], 
-    #                  self.p2.global_coordinates()[2],
-    #                  self.p3.global_coordinates()[2],
-    #                  self.p4.global_coordinates()[2]]        
-    #     return xlist, ylist, zlist
+        xlist = []
+        ylist = []
+        zlist = []
+        
+        for vertex in self.vertices():
+            xlist.append(vertex.x)
+            ylist.append(vertex.y)
+            zlist.append(vertex.z)
+  
+        return xlist, ylist, zlist
 
     """MOVE TO FRAME!"""
-    # def plotlist2(self, uselocal=False):
+    # def plotlist_xyz_local(self, uselocal=False):
     #     """Return a list of lists with the xyz coordinates of each vertex."""
     #     # If object has no parent, return plot list in terms of global frame:
     #     if self.parent == None:
@@ -193,10 +181,10 @@ class Face:
         zc = 0.25 * (self.p1.z + self.p2.z + self.p3.z + self.p4.z)
         return np.array([xc, yc, zc])
 
-    def make_centroid(self):
-        """Find the vertex centroid of the face, and turn it into a Vertex."""
-        (xc, yc, zc) = self.find_centroid()
-        return Vertex(xc, yc, zc, parenttype="face")
+    # def make_centroid(self):
+    #     """Find the vertex centroid of the face, and turn it into a Vertex."""
+    #     (xc, yc, zc) = self.find_centroid()
+    #     return Vertex(xc, yc, zc, parenttype="face")
     
     def find_perpendicular(self):
         """Find a vector perpendicular to a face (direction is ambiguous).

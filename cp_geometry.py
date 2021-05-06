@@ -31,14 +31,14 @@ class Geometry:
         
         self.parenttype=parenttype # Default: "global"
         
-        print("[DEBUG] {} constructed.".format(self))
+        # print("[DEBUG] {} constructed.".format(self))
     
-    def __del__(self):
-        print("[DEBUG] {} destructed.".format(self))
-    
+    # def __del__(self):
+    #     print("[DEBUG] {} destructed.".format(self))
+        
     def set_parenttype(self, new_parenttype):
         if new_parenttype in ["global", "frame"]:
-            self.parent_type=new_parenttype
+            self.parenttype=new_parenttype
         else:
             raise ValueError("The parenttype cannot be anything other than: \
                              'global', 'frame'!")
@@ -57,17 +57,23 @@ class Geometry:
             else:
                 raise TypeError("Geometries can only be made from faces!")
     
+    # def vertices(self):
+    #     """This method loops through all the Face objects in the geometry,
+    #        lists the vertices making up each face, and removes the duplicates
+    #        in the list. It then returns a list of unique vertices."""
+    #     vertices = []
+    #     for face in self.faces:
+    #         face_vertices = face.vertices()
+    #         for vertex in face_vertices:
+    #             if vertex not in vertices:
+    #                 vertices.append(vertex)
+    #     return vertices
+    
     def vertices(self):
-        """This method loops through all the Face objects in the geometry,
-           lists the vertices making up each face, and removes the duplicates
-           in the list. It then returns a list of unique vertices."""
         vertices = []
         for face in self.faces:
-            face_vertices = face.vertices()
-            for vertex in face_vertices:
-                if vertex not in vertices:
-                    vertices.append(vertex)
-        return vertices
+            vertices.extend(face.vertices())
+        return list(set(vertices))
     
     def find_cuboid_centroid(self):
         """Locate the centroid of a cuboid geometry.
@@ -88,23 +94,17 @@ class Geometry:
             zc += vertex.z/len(vertices)
         return np.array([xc, yc, zc])
     
-    def make_cuboid_centroid(self):
-        """Locates the centroid of a cuboid geometry and creates a
-        Vertex at this point."""
-        (xc, yc, zc) = self.find_cuboid_centroid()
-        return Vertex(xc, yc, zc, parent=self.parent)
+    # def make_cuboid_centroid(self):
+    #     """Locates the centroid of a cuboid geometry and creates a
+    #     Vertex at this point."""
+    #     (xc, yc, zc) = self.find_cuboid_centroid()
+    #     return Vertex(xc, yc, zc, parent=self.parent)
 
     def translate(self, dx=0., dy=0., dz=0.):
         """Translate all the vertices in the geometry."""
         vertices = self.vertices()
         for vertex in vertices:
             vertex.translate(dx=dx, dy=dy, dz=dz)
-    
-    def unique_vertices(self):
-        unique_vertices = []
-        for face in self.faces:
-            unique_vertices.extend(face.vertices())
-        return list(set(unique_vertices))
             
     def rotate(self, a, b, c, cor, seq='321'):
         """Rotate all the vertices in the geometry around a point in space.
@@ -112,8 +112,8 @@ class Geometry:
                expressed in radians
            seq is a string with the rotation sequence, e.g. '321' for:
                Rz(c).Ry(b).Rx(a).vertex
-           cor is the centre of rotation, which MUST be specified as
-               a vertex.
+           cor is the centre of rotation, which must be specified as
+               a vertex, coordinate list, or coordinate numpy.ndarray
            """
         vertices = self.vertices()
         for vertex in vertices:
@@ -127,57 +127,37 @@ class Geometry:
             A += face.area
         return A
     
-    # def find_fcentroids(self, returnarray=False):
-    #     """Returns a list of the centroid coordinates of all faces currently 
-    #        in the geometry. Technically, these are vertex centroids.
-    #        Optionally, centroids can be returned as a Numpy array by 
-    #        setting returnarray to True."""
-    #     fcentroids = []
-    #     for i in range(len(self.faces)):
-    #         if returnarray == True:
-    #             fcentroids.append(self.faces[i].find_centroid().xyz())
-    #         else:
-    #             fcentroids.append(self.faces[i].find_centroid())
-    #     return fcentroids
+    def find_fcentroids(self):
+        """Returns a list of the centroid coordinates of all faces currently 
+            in the geometry. Technically, these are vertex centroids.
+            Optionally, centroids can be returned as a Numpy array by 
+            setting returnarray to True."""
+        fcentroids = []
+        for face in self.faces:
+            fcentroids.append(list(face.find_centroid()))
+        return fcentroids
 
     # def find_perpendiculars(self, scale=1.):
     #     """Returns a list with a vector perpendicular to each face in the
-    #        geometry. If scale=1, these vectors will be unit vectors.
+    #         geometry. If scale=1, these vectors will be unit vectors.
             
-    #        TODO: Guarantee that all perpendiculars point away from the 
-    #        centre of the geometry, so that the output is not a mishmash of
-    #        inward and outward pointing vertices. Can achieve this by taking
-    #        inner product of:
-    #            - vector pointing from geometry centroid to Face centroid.
-    #            - computed perpendicular vector for given face.
-    #        If the result is positive, the perpendicular is pointing away from 
-    #        geometry, and if result is negative, flip the perpendicular.
-    #        Downside: Does not work well for concave geometries whose centroid
-    #        is outside the geometry boundaries.
-    #        """
+    #         TODO: Guarantee that all perpendiculars point away from the 
+    #         centre of the geometry, so that the output is not a mishmash of
+    #         inward and outward pointing vertices. Can achieve this by taking
+    #         inner product of:
+    #             - vector pointing from geometry centroid to Face centroid.
+    #             - computed perpendicular vector for given face.
+    #         If the result is positive, the perpendicular is pointing away from 
+    #         geometry, and if result is negative, flip the perpendicular.
+    #         Downside: Does not work well for concave geometries whose centroid
+    #         is outside the geometry boundaries.
+    #         """
     #     perpendiculars = []
-    #     for i in range(len(self.faces)):
-    #         perp = self.faces[i].find_perpendicular()
+    #     for face in self.faces:
+    #         perp = face.find_perpendicular()
     #         perpendiculars.append(perp * scale)
 
     #     # Code that ensures arrows point outwards (TODO):
     #     # ...
 
     #     return perpendiculars
-
-    # def perpendiculars_plotlist(self):
-    #     """Returns a list of lists with coordinates used for plotting.
-    #        Each item in the list is a list of six coordinates:
-    #        - The first three coordinates indicate the xyz of the tail point.
-    #        - The second three coordinates are point a vector from this tail
-    #          point.
-           
-    #        TODO: Pass scaling as argument.
-    #        """
-    #     c = self.find_fcentroids(returnarray=True)
-    #     p = self.find_perpendiculars(scale=0.05)  # Vary 0.05 if needed.
-    #     if len(c) != len(p):
-    #         raise ValueError("Number of centroids and perpendiculars is "
-    #                          "somehow unequal! This should not happen.")
-    #     plotarray = np.hstack([np.vstack(c), np.vstack(p)]).transpose()
-    #     return plotarray.tolist()
