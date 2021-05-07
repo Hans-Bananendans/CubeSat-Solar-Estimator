@@ -50,3 +50,30 @@ def q2e(quaternion, seq='321', returnarray=False):
         return np.array([round(a,10), round(b,10), round(c,10)])
     else:
         return round(a,10), round(b,10), round(c,10)
+    
+def hex2nRGB(hex_colour):
+    """Converts 3, 6, or 9-length hexidecimal codes to normalized RGB values.
+        The normalization is around 1, i.e. 00 -> 0.0 and FF -> 1.0 
+        
+        Returns: tuple(normalized R, normalized G, normalized B)
+        """
+    # Strip hash off colour code:
+    hex_colour = hex_colour.lstrip('#')
+    
+    # Verifying formatting (check if all hexidecimal numbers):
+    if not all(c.lower() in "0123456789abcdef" for c in hex_colour):
+        raise ValueError("Hex colour code '#"+hex_colour+\
+                         "' contains illegal characters!")
+    else:
+        # 1-digit numbers for r/g/b:
+        if len(hex_colour) == 3:
+            return tuple(int(hex_colour[i:i+1], 16)/15 for i in (0, 1, 2))
+        # 2-digit numbers for r/g/b:
+        elif len(hex_colour) == 6 :
+            return tuple(int(hex_colour[i:i+2], 16)/255 for i in (0, 2, 4))
+        # 3-digit numbers for r/g/b:
+        elif len(hex_colour) == 9:
+            return tuple(int(hex_colour[i:i+3], 16)/4095 for i in (0, 3, 6))
+        else:
+            raise ValueError("Hex colour code '#"+hex_colour+\
+                             "' is of incorrect length!")

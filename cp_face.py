@@ -105,7 +105,7 @@ class Face:
     def readout(self, dec=4):
         """Print the vertex coordinates."""
         for vertex in [self.p1, self.p2, self.p3, self.p4]:
-            vertex.xyz()
+            print(vertex.xyz())
     
     def plotlist_local(self):
         """Return three lists with the x, y, and z-components of all four
@@ -143,26 +143,31 @@ class Face:
         """Project a copy of the frame onto a plane that is spanned by two
             axes. The projection is orthographic.
             
-            A "new_frame" can be specified, which will make the projection
-            elements children of this frame. Otherwise, the elements will be
-            children of the global coordinate frame.
+            TODO: A "new_frame" can be specified, which will make the 
+            projection elements children of this frame. Otherwise, the 
+            elements will be children of the global coordinate frame.
             
             TODO: Generalize this function for arbitrary projection frame. """
+        
+        # Eliminate minus sign in front of the plane:    
+        if plane[0] == '-':
+            plane = plane[1:]
+        
         pj_xyz = []
         
         for vertex in [self.p1, self.p2, self.p3, self.p4]:
             if plane == 'xy':
-                pj_x = vertex.xyz_global()[0]
-                pj_y = vertex.xyz_global()[1]
+                pj_x = vertex.x
+                pj_y = vertex.y
                 pj_z = 0
             elif plane == 'xz':
-                pj_x = vertex.xyz_global()[0]
+                pj_x = vertex.x
                 pj_y = 0
-                pj_z = vertex.xyz_global()[2]
+                pj_z = vertex.z
             elif plane == 'yz':
                 pj_x = 0
-                pj_y = vertex.xyz_global()[1]
-                pj_z = vertex.xyz_global()[2]
+                pj_y = vertex.y
+                pj_z = vertex.z
             else:
                 raise ValueError("No valid projection plane given to "
                                   "projection method! "
@@ -170,8 +175,9 @@ class Face:
             pj_xyz.append(Vertex([pj_x, pj_y, pj_z], parenttype="face"))
         
         # Create the projected face using the projected vertices.
-        pj = Face(pj_xyz[0], pj_xyz[1], pj_xyz[2], pj_xyz[3],
-                  parenttype="geometry")
+        if not new_frame: 
+            pj = Face(pj_xyz[0], pj_xyz[1], pj_xyz[2], pj_xyz[3],
+                      parenttype="global")
         return pj
             
     def find_centroid(self):

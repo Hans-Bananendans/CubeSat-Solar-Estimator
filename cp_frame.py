@@ -172,7 +172,7 @@ class Frame:
         xyz_global = np.dot(self.dcm, xyz_local) + o_local
         
         # return xyz_global[0], xyz_global[1], xyz_global[2]
-        return xyz_global
+        return xyz_global        
     
     def geometry_vertices(self):
         geometry_vertices = []
@@ -286,6 +286,109 @@ class Frame:
         # Generate plotarray, which is structured as [xyzuvw1, xyzuvw2, ...]
         plotarray = np.hstack([np.vstack(c), np.vstack(p)]).transpose()
         return plotarray.tolist()
+    
+    def illumination_vector(self, plane='xy'):
+        """Generate an illumination vector based on a given plane.
+           This vector essentially "simulates" where the light is coming from.
+           Currently limited to directions parallel to global XYZ system.
+           """
+        if plane == 'xy':
+            iv = np.array([0, 0, 1])
+        elif plane == '-xy':
+            iv = np.array([0, 0, -1])
+        elif plane == 'xz':
+            iv = np.array([0, 1, 0])
+        elif plane == '-xz':
+            iv = np.array([0, -1, 0])
+        elif plane == 'yz':
+            iv = np.array([1, 0, 0])
+        elif plane == '-yz':
+            iv = np.array([-1, 0, 0])
+        else:
+            raise ValueError("Invalid plane given. Options: 'xy', '-xy', "
+                             "'xz', '-xz', 'yz', '-yz'")
+        return iv
+    
+    # def illuminated_faces(self, geometry: Geometry, plane='xy'):
+    #     """Input a geometry and a illumination plane, and this function will
+    #         return the faces in the geometry that are illuminated.
+    #     """
+    #     iv = self.illumination_vector(plane=plane)
+        
+    #     illuminated_faces = []
+    #     illuminated_strength = []
+    #     for face in geometry.faces:
+    #         ill_status = np.dot(iv, self.face_perpendicular(face))
+    #         print("ill_status = ", ill_status)
+    #         if ill_status < 0:
+    #             illuminated_faces.append(face)
+    #             illuminated_strength.append(np.arccos(ill_status) - np.pi/2)
+    #         else:
+    #             pass
+    #     return illuminated_faces, illuminated_strength
+    
+    def illuminated_faces(self, geometry: Geometry, plane='xy'):
+        """Input a geometry and a illumination plane, and this function will
+            return the faces in the geometry that are illuminated.
+        """
+        iv = self.illumination_vector(plane=plane)
+        
+        illuminated_faces = []
+        
+        for face in geometry.faces:
+            if np.dot(iv, self.face_perpendicular(face)) < 0:
+                illuminated_faces.append(face)
+            else:
+                pass
+        return illuminated_faces
+    
+    def illuminated_strength(self, face: Face, plane='xy'):
+        iv = self.illumination_vector(plane=plane)
+        return np.arccos(np.dot(iv, self.face_perpendicular(face))) - np.pi/2
+    
+    def project_face(self, face: Face, plane='xy', new_frame=None):
+        # Eliminate minus sign in front of the plane:    
+        if plane[0] == '-':
+            plane = plane[1:]
+        
+        pj_xyz = []
+        
+        for vertex in [face.p1, face.p2, face.p3, face.p4]:
+            
+            global_coords = self.vertex_xyz_global(vertex)
+            
+            if plane == 'xy':
+                pj_x = global_coords[0]
+                pj_y = global_coords[1]
+                pj_z = 0
+            elif plane == 'xz':
+                pj_x = global_coords[0]
+                pj_y = 0
+                pj_z = global_coords[2]
+            elif plane == 'yz':
+                pj_x = 0
+                pj_y = global_coords[1]
+                pj_z = global_coords[2]
+            else:
+                raise ValueError("No valid projection plane given to "
+                                  "projection method! "
+                                  "Valid options: 'xy', 'xz', 'yz'")
+            pj_xyz.append(Vertex([pj_x, pj_y, pj_z], parenttype="face"))
+        
+        # Create the projected face using the projected vertices.
+        if not new_frame: 
+            pj = Face(pj_xyz[0], pj_xyz[1], pj_xyz[2], pj_xyz[3],
+                      parenttype="global")
+        else:
+            raise TypeError("new_frame functionality is not yet implemented.")
+        return pj
+        
+    def illuminated_area(self, geometry: Geometry, plane='xy'):
+        area = 0
+        for face in self.illuminated_faces(geometry, plane):
+            area += self.project_face(face, plane).area()
+        return area
+    
     
     def readout(self, dec=4):
         """More detailed information about Vertex.

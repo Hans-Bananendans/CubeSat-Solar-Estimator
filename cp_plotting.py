@@ -19,7 +19,7 @@ from cp_face import Face
 from cp_geometry import Geometry
 from cp_vector import Vector
 from cp_frame import Frame
-     
+from cp_utilities import hex2nRGB
 
 
 def plot_vertex(axes: plt.matplotlib.axes, vertex: Vertex, 
@@ -78,7 +78,7 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
                linewidth=2,          # Thickness of face lines
                linealpha=1,          # Opacity of face lines
                facefill=True,        # If False, does not shade the face area
-               facecolour="#000",    # Colour of the face area shading
+               facecolour="#555",    # Colour of the face area shading
                facealpha=1,          # Opacity of the face area shading
 
                # Face perpendicular arrow plotting properties:
@@ -90,6 +90,8 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
                # Illumination:
                illumination=False,   # If True, plots illumination intensity
                ill_value=0,          # Used to plot illumination intensity
+               ill_plane=None,       # If illumination is used, a plane
+                                     #  MUST be satisfied.
                
                # Vector plotting properties:
                vectorfill=True,      # If False, does not plot vector arrow
@@ -117,6 +119,21 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
             
             # Then plot faces, without plotting the vertices
             for face in geometry.faces:
+                if illumination:
+                    if not ill_plane:
+                        raise AssertionError("If illumination is plotted, an \
+                                             illumination plane MUST be \
+                                             specified, e.g. \
+                                             (ill_plane = 'xy')")
+                    else:
+                        if face not in frame.illuminated_faces(geometry,
+                                                               plane=ill_plane
+                                                               ):
+                            ill_value = 0
+                        else:
+                            ill_value = frame.illuminated_strength(face,
+                                                                   plane=ill_plane)
+                        
                 plot_face(axes, face, frame.plotlist(face),
                           linefill=linefill, 
                           linecolour=linecolour,
@@ -125,7 +142,7 @@ def plot_frame(axes: plt.matplotlib.axes, frame: Frame,
                           facefill=facefill,
                           facecolour=facecolour,
                           facealpha=facealpha,
-                          vertexfill=False, # Vertices are already plotted
+                          vertexfill=False,
                           vertexcolour=vertexcolour,
                           vertexsize=vertexsize,
                           vertexalpha=vertexalpha, 
@@ -168,7 +185,7 @@ def plot_face(axes: plt.matplotlib.axes, face: Face,
               linewidth=2,          # Thickness of face lines
               linealpha=1,          # Opacity of face lines
               facefill=True,        # If False, does not shade the face area
-              facecolour="#000",    # Colour of the face area shading
+              facecolour="#555",    # Colour of the face area shading
               facealpha=1,          # Opacity of the face area shading
               
               # Vertex plotting properties:
@@ -188,7 +205,6 @@ def plot_face(axes: plt.matplotlib.axes, face: Face,
         """Return a list of lists with the xyz coordinates of each vertex."""
         # If object has no parent, return plot list in terms of global frame:
         
-        plotlist_xyz = []
         p1_xyz = []
         p2_xyz = []
         p3_xyz = []
@@ -231,7 +247,9 @@ def plot_face(axes: plt.matplotlib.axes, face: Face,
             plotlist_xyz = plotlist2plotlist_xyz(face.plotlist_local())
             fs = mp3d.art3d.Poly3DCollection([plotlist_xyz],
                                               linewidth=0)
-            fs.set_facecolor((0.1, 0.1, 0.1, facealpha))
+            
+            (nR, nG, nB) = hex2nRGB(facecolour)
+            fs.set_facecolor((nR, nG, nB, facealpha))
             axes.add_collection3d(fs)
     
     # Case 2: Face is in a frame
@@ -255,9 +273,87 @@ def plot_face(axes: plt.matplotlib.axes, face: Face,
             plotlist_xyz = plotlist2plotlist_xyz(plotlist)
             fs = mp3d.art3d.Poly3DCollection([plotlist_xyz],
                                               linewidth=0)
-            fs.set_facecolor((0.1, 0.1, 0.1, facealpha))
-            axes.add_collection3d(fs)
+            if not illumination:
+                (nR, nG, nB) = hex2nRGB(facecolour)
+                fs.set_facecolor((nR, nG, nB, facealpha))
+                axes.add_collection3d(fs)
+            else:
+                value = round(0.1 + 0.9 / 1.6 * ill_value, 2)
+                fs.set_facecolor((value, value, value, facealpha))
+                axes.add_collection3d(fs)
+                
+
+     
+def plot_illumination(axes: plt.matplotlib.axes, frame: Frame, 
+                      plane='xy', geometry: Geometry=None, 
+                      
+                      # Tripod properties
+                      show_tripod=False,    # If False, does not plot the tripod
+                      tripod_scale=1,       # Sets the scale of the tripod
+                      plot_perpendiculars=False, # Plot perpendiculars
+                      
+                      # Vertex plotting properties:
+                      vertexfill = False,   # If False, vertex will not be plotted
+                      vertexcolour="FFC125",# Specifies the vertex colour
+                      vertexsize=10,        # Size of the plotted vertex
+                      vertexalpha=1,        # Opacity of the plotted vertex
+                      
+                      # Face plotting properties:
+                      linefill=True,        # If False, does not plot face lines
+                      linecolour="#FFC125", # Colour of face lines
+                      linewidth=2,          # Thickness of face lines
+                      linealpha=1,          # Opacity of face lines
+                      facefill=False,       # If False, does not shade the face area
+                      facecolour="FFC125",  # Colour of the face area shading
+                      facealpha=1,          # Opacity of the face area shading
+                       
+                      # Face perpendicular arrow plotting properties:
+                      perpfill = False,     # If True, plot perpendiculars
+                      perpcolour="#888",    # Specifies the perp. arrow colour
+                      perpscale=1,          # Size of the plotted perp. arrow
+                      perpalpha=0.5,        # Opacity of the plotted perp. arrow             
+                       
+                      # Illumination:
+                      illumination=False,   # If True, plots illumination intensity
+                      ill_value=0,          # Used to plot illumination intensity
+                      
+                      # Vector plotting properties:
+                      vectorfill=False,     # If False, does not plot vector arrow
+                      vectorcolour="#000",  # Colour of vector arrow
+                      vectoralpha=1,        # Opacity of vector arrow
+                      vectorscale=1,        # Scale the whole vector by a constant
+                      vectorratio=0.15      # Vector arrow length ratio
+                      ):
+    # Gather the faces to be plotted in the geometry. If no geometry was
+    #   provided (geometry=None), plot all the illuminated faces in the frame.
+    
+    if not geometry:
+        geometries = frame.geometries
+    else:
+        geometries = list(geometry)
+    
+    illuminated_faces = []
+    
+    # Find out what faces are illuminated:
+    for geo in geometries:
+        faces = frame.illuminated_faces(geo, plane=plane)
+        illuminated_faces.extend(faces)
+    
+    # Plot each face after projecting them in the global frame:
+    for face in illuminated_faces:
+        # projected_face = frame.project_face(face)
+        plot_face(axes, frame.project_face(face, plane=plane), 
+              linefill=linefill, linecolour=linecolour, linewidth=linewidth, 
+              linealpha=linealpha, facefill=facefill, facecolour=facecolour,
+              facealpha=facealpha, vertexfill=vertexfill, 
+              vertexcolour=vertexcolour, vertexsize=vertexsize, 
+              vertexalpha=vertexalpha, illumination=False)
         
+        
+    
+    
+    
+            
 # def plot_geometry(axes: plt.matplotlib.axes, geometry: Geometry,
 #                   # Face plotting properties:
 #                   linefill=True,        # If False, does not plot face lines
