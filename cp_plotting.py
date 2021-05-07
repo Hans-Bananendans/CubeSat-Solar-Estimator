@@ -598,3 +598,21 @@ def plot_global_tripod(axes: plt.matplotlib.axes, alpha=1, scaling=1.):
 #     # Plot all vectors in frame too
 #     for vector in frame.vectors:
 #         plot_vector(axes, vector)
+
+def plot_A_ill(A_ill: list):
+    # Calculate average area
+    A_avg = round(sum(A_ill)/len(A_ill), 4)
+    
+    # Set up plot
+    fig_tmp = plt.figure(figsize=(10, 7))
+    ax_tmp = fig_tmp.add_subplot(111)
+    ax_tmp.set_ylim([0, 0.04])
+    plt.title("Illuminated CubeSat area during simulation.")
+    plt.xlabel("Simulation steps")
+    plt.ylabel("Illuminated area [m^2]")    
+    plt.text(0,0.035,"Average area: {} m^2".format(A_avg), color='r')
+    # Area progression plot
+    plt.plot(range(len(A_ill)), A_ill, 'k')
+    
+    # Average area plot
+    plt.plot([0, len(A_ill)], [A_avg, A_avg], 'r:')
