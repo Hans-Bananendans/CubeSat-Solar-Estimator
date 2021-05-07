@@ -171,7 +171,7 @@ if True:
     plt.show()
 
 
-def plot_A_ill(A_ill):
+def plot_A_ill(A_ill: list):
     # Calculate average area
     A_avg = round(sum(A_ill)/len(A_ill), 4)
     

@@ -18,8 +18,9 @@ from cp_geometry import Geometry
 from cp_vector import Vector
 from cp_frame import Frame
 from cp_utilities import d2r#, r2d
-from cp_plotting import plot_global_tripod, plot_frame, \
-    plot_vertex, plot_face, plot_geometry_perpendiculars, plot_A_ill
+from cp_plotting import plot_global_tripod, plot_frame,\
+    plot_vertex, plot_face, plot_geometry_perpendiculars, plot_illumination,\
+        plot_A_ill
 
 
 #%% ==== Plotting ====
@@ -32,9 +33,9 @@ if True:
     ax = mp3d.Axes3D(fig)
     
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
-    ax.view_init(elev=20, azim=-60)
+    ax.view_init(elev=20, azim=-50)
     
-    steps = 48
+    steps = 64
     angle_step = d2r(360/steps)
     
     p0 = Vertex([  0.5,   0.5,  0.5])
@@ -60,12 +61,25 @@ if True:
     frame1.add_geometry(cubesat)
     frame1.translate(0.3, 0.3, 0.25)
     
-    frame1.rotate(0, 0, d2r(1*360/12))
+    frame1.rotate(0, 0, d2r(1.5*360/12))
     
     # DO A BARN DOOR!
     # cubesat.rotate(0,d2r(-90),0,cor=list(cubesat.find_cuboid_centroid()))
     
     
+    # Model the fake Earth
+    Ep = Face(Vertex([0.001,0.001,0]), Vertex([0.001,-0.001,0]),
+              Vertex([-0.001,-0.001,0]), Vertex([-0.001,0.001,0]))
+    E = Geometry([Ep])
+    frameE = Frame()
+    frameE.add_geometry(E)
+    frameE.translate(0.3, 0.3, 0.25)
+    # frameE.rotate(0, 0, d2r(1.5*360/12))
+    
+    E.translate(0,.15,0)
+    
+    
+    # Pre-allocate the illumination area vector
     A_ill = np.zeros(steps-1)
     
     def update(i):
@@ -73,7 +87,7 @@ if True:
         # Setting up the axes object
         ax.clear()
         
-        ax.set_title("Wireframe visualization. Frame: {}".format(str(i)))
+        
         
         plotscale = 0.5
         ax.set_xlim(0, 1.25*plotscale)
@@ -84,16 +98,17 @@ if True:
         ax.set_ylabel('y')
         ax.set_zlabel('z')
         
+        
         # Transforming cubesat
         cubesat.rotate(angle_step,0,0,cor=list(cubesat.find_cuboid_centroid()))
         
-        shadow = False
-        shadow_toggle = False        
-
+        # Transform fake Earth
+        E.rotate(angle_step,0,0,cor=list(cubesat.find_cuboid_centroid()))
 
         # Shitty shadow simulation:
-        if shadow_toggle:
-            if 0.3 <= i/(steps-1) <= 0.7:
+        if True: # Toggle
+            shadow = False  
+            if 0.5-0.361/2 <= i/(steps-1) <= 0.5+0.361/2:
                 shadow = True
             else:
                 shadow = False
@@ -102,7 +117,7 @@ if True:
         if not shadow:
             A_ill[i-1] = round(frame1.illuminated_area(cubesat, plane='xz'), 4)
         else:
-            A_ill = 0
+            A_ill[i-1] = 0
         
         print("[DEBUG] Frame {}, i/(steps-1) = {}, shadow {}"\
               .format(i, round(i/(steps-1),2), shadow))
@@ -115,16 +130,32 @@ if True:
             plot_frame(ax, frame1, tripod_scale=plotscale/8,
                        perpfill=False, perpscale=0.1, 
                        illumination=True, ill_plane='xz',
-                       facecolour="#0F0F0F"
+                       facecolour="#0F0F0F", facealpha=1
                        )
+            
+            plot_illumination(ax, frame1, plane='xz')
+            
         else:
             plot_frame(ax, frame1, tripod_scale=plotscale/8,
                        perpfill=False, perpscale=0.1, 
                        illumination=False, ill_plane='xz',
-                       facecolour="#0F0F0F"
+                       facecolour="#0F0F0F", facealpha=1
                        )
+            
+            plot_illumination(ax, frame1, plane='xz',linecolour="#000")
+        
 
+        
+        plot_frame(ax, frameE, tripod_scale=plotscale/8, show_tripod=False,
+                   linefill=False, facefill=False,
+                   illumination=False,
+                   vertexcolour="#0000DD", vertexsize=300
+                   )
+
+        ax.set_title("3D Visualization.    Frame: {}.    A_ill = {} m^2.    Shadow is {}.\
+                     ".format(str(i), str(A_ill[i-1]), shadow))
+        
     ani = animation.FuncAnimation(fig, update, np.arange(1,steps), 
-                                  interval = 75, repeat = False)
+                                  interval = 100, repeat = False)
 
     plt.show()
