@@ -1,27 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu April 27 15:02:11 2021    
+Created on Sat May 01 5:43:09 2021
 
 @author: Johan Monster
 
 Cube Projector - Utility functions
-Version: 1.2
+Version: 2.0
 
 """
 
 import numpy as np
-from numpy import sin, cos, sqrt
-
-
+from numpy import sin, cos
+    
 def r2d(a):
     """Convert radians to degrees."""
     return a * 180 / np.pi
 
-
 def d2r(a):
     """Convert degrees to radians."""
     return a * np.pi / 180
-
 
 def e2q(a, b, c, seq='321'):
     """Converts Euler angles to quaternions."""
@@ -40,7 +37,7 @@ def q2e(quaternion, seq='321', returnarray=False):
     q2 = float(q2)
     q3 = float(q3)
     q4 = float(q4)
-    length = round(sqrt(q1*q1 + q2*q2 + q3*q3 + q4*q4), 8)
+    length = round(np.sqrt(q1*q1 + q2*q2 + q3*q3 + q4*q4), 8)
     if length != 1:
         raise ValueError("Quaternion given is not a unit quaternion. "
                          "|q|^2 = {} != 1".format(length))
@@ -54,33 +51,29 @@ def q2e(quaternion, seq='321', returnarray=False):
     else:
         return round(a,10), round(b,10), round(c,10)
     
-def euler_rotation(self, a, b, c, vector, seq='321'):
-    """ Rotates a vector using sequential Euler rotations.
-        a is Euler angle of rotation around x, etc...
-            expressed in radians
-        vector is the vector to be rotated
-        seq is a string with the rotation sequence, e.g. '321' for:
-            Rz(c).Ry(b).Rx(a).vertex
-    """
-
-    Rx = np.array([[1,      0,       0],
-                   [0, cos(a), -sin(a)],
-                   [0, sin(a),  cos(a)]])
-
-    Ry = np.array([[ cos(b), 0, sin(b)],
-                   [      0, 1,      0],
-                   [-sin(b), 0, cos(b)]])
-
-    Rz = np.array([[cos(c), -sin(c), 0],
-                   [sin(c),  cos(c), 0],
-                   [     0,       0, 1]])
-
-    for axis in reversed(seq):
-        if axis == '1':
-            vector = np.dot(Rx, vector)
-        if axis == '2':
-            vector = np.dot(Ry, vector)
-        if axis == '3':
-            vector = np.dot(Rz, vector)
+def hex2nRGB(hex_colour):
+    """Converts 3, 6, or 9-length hexidecimal codes to normalized RGB values.
+        The normalization is around 1, i.e. 00 -> 0.0 and FF -> 1.0 
+        
+        Returns: tuple(normalized R, normalized G, normalized B)
+        """
+    # Strip hash off colour code:
+    hex_colour = hex_colour.lstrip('#')
     
-    return vector
+    # Verifying formatting (check if all hexidecimal numbers):
+    if not all(c.lower() in "0123456789abcdef" for c in hex_colour):
+        raise ValueError("Hex colour code '#"+hex_colour+\
+                         "' contains illegal characters!")
+    else:
+        # 1-digit numbers for r/g/b:
+        if len(hex_colour) == 3:
+            return tuple(int(hex_colour[i:i+1], 16)/15 for i in (0, 1, 2))
+        # 2-digit numbers for r/g/b:
+        elif len(hex_colour) == 6 :
+            return tuple(int(hex_colour[i:i+2], 16)/255 for i in (0, 2, 4))
+        # 3-digit numbers for r/g/b:
+        elif len(hex_colour) == 9:
+            return tuple(int(hex_colour[i:i+3], 16)/4095 for i in (0, 3, 6))
+        else:
+            raise ValueError("Hex colour code '#"+hex_colour+\
+                             "' is of incorrect length!")
