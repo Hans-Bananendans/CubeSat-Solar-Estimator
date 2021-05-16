@@ -4,7 +4,7 @@ Created on Sat May 01 5:43:09 2021
 
 @author: Johan Monster
 
-Cube Projector - Vertex class
+Cube Projector - Face class
 Version: 2.0
 
 """
@@ -18,15 +18,31 @@ class Face:
     
        A face consists of four vertices that make up the corners of a plane.
        All four vertices must be coplanar, and the class constructor will
-       verify this. The order in which the vertices are supplied DOES matter,
-       and for best results they must be supplied sequentially and 
+       verify this. The order in which the vertices are supplied DOES matter, 
+       as the faces have one side only (as opposed to a front and a backside)
+       
+       For best results the corners must be supplied sequentially and 
        counterclockwise, i.e.:
+           
           4  o---o 3
              |   |  
           1  o---o 2
           
-       TODO: Add vertex cleanup?
-       TODO: Add projection
+       This will create a face that has a front area, and the normal of the 
+       face will point upward (towards the reader). If supplied in clockwise
+       direction instead, this face would have identical points, but its
+       normal would point down (away from the reader, into the screen).
+          
+       Construction example:
+              
+           f1 = Face(Vertex([ 1, 0, 0]), 
+                     Vertex([ 1, 1, 0]),
+                     Vertex([-1, 1, 0]), 
+                     Vertex([-1,-1, 0])
+                     )
+               Creates an instance of the Face class named 'f1', which forms
+               a square face in the XY-plane, with sides of length 2, centred
+               on the local origin.             
        """
 
     def __init__(self, p1: Vertex, p2: Vertex, p3: Vertex, p4: Vertex,
@@ -36,30 +52,26 @@ class Face:
         self.p2 = p2
         self.p3 = p3
         self.p4 = p4
-        
-        for vertex in self.vertices():
-            vertex.set_parenttype("face")
-            
-        # self.special_vertices = [] # This is for special vertices only!
-        
-        self.parenttype=parenttype # Default: "global"
-        
+                
+        # Ensure provided vertices are coplanar
         if self.check_coplanarity() == False:
             raise ValueError("Error! Set of four points is not coplanar!")
+            
+        self.parenttype = "global"
+        
+        # Re-assign self.parenttype to check for validity of given parenttype
+        if parenttype != "global":
+            self.set_parenttype(parenttype)
+        
+        # Let child vertices know their parenttype is 'face'
+        for vertex in self.vertices():
+            vertex.set_parenttype("face")
 
-        
-        # print("[DEBUG] {} constructed.".format(self))
-        
-    # def __del__(self):
-    #     """Custom deconstructor to clean up child-parent relationships."""
-        
-        # for vertex in [self.p1, self.p2, self.p3, self.p4]:
-        #     del(vertex)
-        # print("[DEBUG] Erasing c-p relation of {}".format(self))
-    
-        # print("[DEBUG] {} deconstructed..".format(self))
 
     def set_parenttype(self, new_parenttype):
+        """Sets own parenttype to a specified parenttype. First verifies 
+        specified parenttype.
+        """
         if new_parenttype in ["global", "frame", "geometry"]:
             self.parenttype=new_parenttype
             
@@ -81,7 +93,9 @@ class Face:
             return False
     
     def area(self):
-        """Calculate area of the face, by computing the diagonals."""
+        """Calculate area of the face, by computing the diagonals.
+        
+           Returns: face area (float)"""
         diag13 = self.p3.xyz() - self.p1.xyz()
         diag24 = self.p4.xyz() - self.p2.xyz()
         cpdiag = np.cross(diag13, diag24)
@@ -93,19 +107,8 @@ class Face:
         return [self.p1, self.p2, self.p3, self.p4]
     
     def corners(self):
-        """Synonym function of self.vertices():"""
+        """Synonym function of self.vertices()."""
         return self.vertices()
-
-    # def vertices_special(self):
-    #     return self.special_vertices
-    
-    # def vertices_all(self):
-    #     return self.vertices() + self.vertices_special()
-    
-    def readout(self, dec=4):
-        """Print the vertex coordinates."""
-        for vertex in [self.p1, self.p2, self.p3, self.p4]:
-            print(vertex.xyz())
     
     def plotlist_local(self):
         """Return three lists with the x, y, and z-components of all four
@@ -121,33 +124,21 @@ class Face:
             zlist.append(vertex.z)
   
         return xlist, ylist, zlist
-
-    """MOVE TO FRAME!"""
-    # def plotlist_xyz_local(self, uselocal=False):
-    #     """Return a list of lists with the xyz coordinates of each vertex."""
-    #     # If object has no parent, return plot list in terms of global frame:
-    #     if self.parent == None:
-    #         uselocal = True
-        
-    #     if uselocal:
-    #         # Fetch local vertex coordinates, and apply them to global frame
-    #         grid1 = np.array([self.p1.xyz(), self.p2.xyz(),
-    #                           self.p3.xyz(), self.p4.xyz()])
-    #     else:
-    #         # Fetch global vertex coordinates, and apply them to global frame
-    #         grid1 = np.array([self.p1.xyz_global(), self.p2.xyz_global(),
-    #                           self.p3.xyz_global(), self.p4.xyz_global()])
-    #     return grid1.tolist()
     
-    def project(self, new_frame=None, plane='xy'):
-        """Project a copy of the frame onto a plane that is spanned by two
+    def project(self, plane='xy', new_frame=None):
+        """Project a copy of the face onto a plane that is spanned by two
             axes. The projection is orthographic.
+            
+            If this face is not attached to the global coordinate frame, then
+            the face returned by this function will be in terms of the local
+            frame.
             
             TODO: A "new_frame" can be specified, which will make the 
             projection elements children of this frame. Otherwise, the 
             elements will be children of the global coordinate frame.
             
-            TODO: Generalize this function for arbitrary projection frame. """
+            TODO: Generalize this function for arbitrary projection plane. 
+            """
         
         # Eliminate minus sign in front of the plane:    
         if plane[0] == '-':
@@ -155,6 +146,7 @@ class Face:
         
         pj_xyz = []
         
+        # Flatten the coordinates of each vertex onto the projection plane:
         for vertex in [self.p1, self.p2, self.p3, self.p4]:
             if plane == 'xy':
                 pj_x = vertex.x
@@ -176,19 +168,29 @@ class Face:
         
         # Create the projected face using the projected vertices.
         if not new_frame: 
+            pj = Face(pj_xyz[0], pj_xyz[1], pj_xyz[2], pj_xyz[3])
+        else:
             pj = Face(pj_xyz[0], pj_xyz[1], pj_xyz[2], pj_xyz[3],
-                      parenttype="global")
+                      parenttype="frame")
+            new_frame.add_face(pj)
         return pj
             
     def find_centroid(self):
-        """Find the vertex centroid of the face."""
+        """Find the vertex centroid of the face, and then return its
+           local coordinates in an numpy.ndarray.
+           
+           Returns: numpy.ndarray([xc, yc, zc])
+           """
         xc = 0.25 * (self.p1.x + self.p2.x + self.p3.x + self.p4.x)
         yc = 0.25 * (self.p1.y + self.p2.y + self.p3.y + self.p4.y)
         zc = 0.25 * (self.p1.z + self.p2.z + self.p3.z + self.p4.z)
         return np.array([xc, yc, zc])
 
     def make_centroid(self):
-        """Find the vertex centroid of the face, and turn it into a Vertex."""
+        """Find the vertex centroid of the face, and turn it into a Vertex.
+        
+           Returns: Vertex([xc, yc, zc])
+           """
         (xc, yc, zc) = self.find_centroid()
         return Vertex([xc, yc, zc])
     
@@ -196,9 +198,16 @@ class Face:
         """Find a vector perpendicular to a face (direction is ambiguous).
            TODO: Generalize the direction of the perpendicular vector.
            Currently the direction depends on how the face is defined. """
+           
         # Find perpendicular vector to plane spanned by p12, p14.
-        # Then normalize it to a unit vector
         p12 = (self.p2.xyz() - self.p1.xyz())
         p14 = (self.p4.xyz() - self.p1.xyz())
         perpendicular = np.cross(p12, p14)
+        
+        # Then normalize it to a unit vector and return
         return perpendicular / np.linalg.norm(perpendicular)
+    
+    def readout(self, dec=4):
+        """Print the vertex coordinates of all corners."""
+        for vertex in [self.p1, self.p2, self.p3, self.p4]:
+            print(vertex.xyz())

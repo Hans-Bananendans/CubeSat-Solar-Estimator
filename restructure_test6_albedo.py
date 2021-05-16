@@ -166,7 +166,7 @@ if True:
         global A_ill
         if not shadow:
             A_ill[i-1] = round(frame1.illuminated_area(cubesat, plane='xz'), 4)
-            A_ill2[i-1] = round(frame1.A_alt(cubesat, albedo_vector),4)
+            A_ill2[i-1] = round(frame1.area_projected(cubesat, albedo_vector),4)
         else:
             A_ill[i-1] = 0
             A_ill2[i-1] = 0

@@ -19,22 +19,13 @@ class Vertex:
     Usage: Vertex has 3D carthesian coordinates, and some knowledge of its
     parent. The parent can be used to guide certain behaviour.
     
-    Construction examples:
-        p1 = Vertex()
-            Creates a Vertex instance 'p1' at XYZ(0, 0, 0).
-        
-        p1 = Vertex([2, 4, 1])
-            Creates a Vertex instance 'p1' at XYZ (2, 4, 1).
-        
-        p1 = Vertex([1, 1, 1], parenttype='frame')
-            Creates a Vertex instance 'p1' at XYZ (1, 1, 1) and manually
-            set the vertex parenttype to 'frame' (generally not necessary).
+    Construction:
         
     """
 
     def __init__(self, xyz=[0, 0, 0], parenttype="global"):
         
-        if not (isinstance(xyz,list) or isinstance(xyz, np.ndarray)):
+        if type(xyz) != list or not isinstance(xyz, np.ndarray):
             raise TypeError("Vertex constructor was not supplied with correct\
                             Vertex coordinates! Use a list or numpy.ndarray!")
 
@@ -44,19 +35,15 @@ class Vertex:
         self.parenttype = "global"
         
         # Re-assign self.parenttype to check for validity of given parenttype
-        if parenttype != "global":
-            self.set_parenttype(parenttype)
+        self.set_parenttype(parenttype)
         
         
     def set_parenttype(self, new_parenttype):
-        """Sets own parenttype to a specified parenttype. First verifies 
-        specified parenttype.
-        """
-        if new_parenttype in ["global","frame","geometry","face","vector"]:
+        if new_parenttype in ["global", "frame", "geometry", "face"]:
             self.parenttype=new_parenttype
         else:
             raise ValueError("The parenttype cannot be anything other than: \
-                             'global','frame','geometry','face','vector'!")
+                             'global', 'frame', 'geometry', 'face'!")
                              
     
     def translate(self, dx=0., dy=0., dz=0.):
@@ -82,12 +69,12 @@ class Vertex:
         
         # ==== COR argument handling ====
         # Case: COR is given as a list/ndarray of coordinates  
-        if (isinstance(cor, list) or isinstance(cor, np.ndarray)):
+        if type(cor) == list or isinstance(cor, np.ndarray):
             if len(cor) == 3:
                 cor = Vertex(list(cor))
                 
         # Case: COR is given as a Vertex
-        elif isinstance(cor, Vertex):
+        elif type(cor) == Vertex:
             pass
             
         # All other cases
@@ -114,7 +101,7 @@ class Vertex:
             # If no Centre of Rotation (cor) is given, take frame origin.
             # If not, subtract coordinates of cor first before applying 
             # the rotation, and then reverse this afterwards.
-            if cor:
+            if cor != None:
                 self.translate(-1*cor.x, -1*cor.y, -1*cor.z)
             
             if axis == '1':
@@ -130,7 +117,7 @@ class Vertex:
                 np.dot(Rz, np.array([self.x, self.y, self.z]))
             
             # Reverse temporary translation.
-            if cor:
+            if cor != None:
                 self.translate(1*cor.x, 1*cor.y, 1*cor.z)
             
     

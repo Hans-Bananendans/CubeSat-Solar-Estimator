@@ -42,7 +42,7 @@ def plot_vertex(axes: plt.matplotlib.axes, vertex: Vertex,
         # If not, check and use xyz_global coordinates provided
         else:
             # Verifying type of xyz_global
-            if type(xyz_global) == list or isinstance(xyz_global, np.ndarray):
+            if (isinstance(xyz_global, list) or isinstance(xyz_global, np.ndarray)):
                 # Verifying length of xyz_global
                 if len(xyz_global) == 3:
                     [x, y, z] = xyz_global
