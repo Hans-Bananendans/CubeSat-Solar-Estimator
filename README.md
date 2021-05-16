@@ -2,7 +2,7 @@
 Collection of code fragments dealing with three-dimensional manipulation and rendering. Primary use for the author is propagation of a CubeSat model for estimating the effects of illumination over time. Matplotlib is used as the rendering engine.
 
 ## Example output in Matplotlib
-![Imgur Image](https://imgur.com/a/Bq7VbXg)
+![image](./demo_animation.gif?raw=true)
 
 ## Code structure: 
  * Adds a **Vertex** class that defines a vertex in 3D space. 
