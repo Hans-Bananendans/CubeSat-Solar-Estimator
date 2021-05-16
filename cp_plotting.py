@@ -430,6 +430,18 @@ def plot_vector(axes: plt.matplotlib.axes, vector: Vector):
 #                 xyzuvw[3][:], xyzuvw[4][:], xyzuvw[5][:],
 #                 color=colour, alpha=alpha)
 
+def plot_arrow(axes, base, head, 
+                      alpha=1, scaling=1.):
+    """Plots an rgb xyz tripod at the global origin.
+        - alpha changes the opacity of the arrows. (default: 1)
+        - scaling changes the length of the arrows (default: 1)
+        """
+    sc = scaling
+    axes.quiver(base[0], base[1], base[2], 
+                sc*head[0], sc*head[1], sc*head[2],
+              arrow_length_ratio=0.15, color='purple', alpha=alpha)
+
+
 def plot_frame_tripod(axes: plt.matplotlib.axes, frame: Frame, 
                       alpha=1, scaling=1.):
     """Plots an rgb xyz tripod at the global origin.

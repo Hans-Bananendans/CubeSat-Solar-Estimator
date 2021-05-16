@@ -346,6 +346,21 @@ class Frame:
         iv = self.illumination_vector(plane=plane)
         return np.arccos(np.dot(iv, self.face_perpendicular(face))) - np.pi/2
     
+    def cosi_face(self, face: Face, vector):
+        return np.dot(vector, self.face_perpendicular(face))
+    
+    def A_alt(self, geometry: Geometry, vector):
+        A_partial = []
+        
+        for face in geometry.faces:
+            cosi = self.cosi_face(face, vector)
+            if cosi < 0:
+                A_partial.append(-cosi*face.area())
+            else:
+                A_partial.append(0)
+        return sum(A_partial)
+        
+    
     def project_face(self, face: Face, plane='xy', new_frame=None):
         # Eliminate minus sign in front of the plane:    
         if plane[0] == '-':

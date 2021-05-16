@@ -187,10 +187,10 @@ class Face:
         zc = 0.25 * (self.p1.z + self.p2.z + self.p3.z + self.p4.z)
         return np.array([xc, yc, zc])
 
-    # def make_centroid(self):
-    #     """Find the vertex centroid of the face, and turn it into a Vertex."""
-    #     (xc, yc, zc) = self.find_centroid()
-    #     return Vertex(xc, yc, zc, parenttype="face")
+    def make_centroid(self):
+        """Find the vertex centroid of the face, and turn it into a Vertex."""
+        (xc, yc, zc) = self.find_centroid()
+        return Vertex([xc, yc, zc])
     
     def find_perpendicular(self):
         """Find a vector perpendicular to a face (direction is ambiguous).

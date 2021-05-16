@@ -94,11 +94,11 @@ class Geometry:
             zc += vertex.z/len(vertices)
         return np.array([xc, yc, zc])
     
-    # def make_cuboid_centroid(self):
-    #     """Locates the centroid of a cuboid geometry and creates a
-    #     Vertex at this point."""
-    #     (xc, yc, zc) = self.find_cuboid_centroid()
-    #     return Vertex(xc, yc, zc, parent=self.parent)
+    def make_cuboid_centroid(self):
+        """Locates the centroid of a cuboid geometry and creates a
+        Vertex at this point."""
+        (xc, yc, zc) = self.find_cuboid_centroid()
+        return Vertex([xc, yc, zc])
 
     def translate(self, dx=0., dy=0., dz=0.):
         """Translate all the vertices in the geometry."""
