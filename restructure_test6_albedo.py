@@ -44,7 +44,7 @@ if True:
     """ TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: """
     ax.view_init(elev=20, azim=-50)
     
-    steps = 95
+    steps = 250
     angle_step = d2r(360/steps)
     
     p0 = Vertex([  0.5,   0.5,  0.5])
@@ -70,22 +70,22 @@ if True:
     frame1.add_geometry(cubesat)
     frame1.translate(0.3, 0.3, 0.25)
     
-    # frame1.rotate(0, 0, d2r(1.5*360/24))
+    frame1.rotate(0, 0, d2r(1.5*360/24))
     
     # Nadir pointing Z
     # cubesat.rotate(0,0,d2r(-1.5*360/24+45),cor=list(cubesat.find_cuboid_centroid()))
     # cubesat.rotate(0,0,d2r(-45),cor=list(cubesat.find_cuboid_centroid()))
     # cubesat.rotate(0,0,d2r(45),cor=list(cubesat.find_cuboid_centroid()))    
     # cubesat.rotate(d2r(25),0,0,cor=list(cubesat.find_cuboid_centroid()))    
-
+    
     
     # DO A BARN DOOR!
-    # cubesat.rotate(0,d2r(-90),0,cor=list(cubesat.find_cuboid_centroid()))
+    # cubesat.rotate(0,d2r(90),d2r(80),cor=list(cubesat.find_cuboid_centroid()))
     
     # MOAR SURFACE!
-
     
-
+    
+    
     # Model the fake Earth
     E_anchor = Vertex([0,0,0])
     Ep = Face(E_anchor, Vertex([0,0.001,0]),
@@ -106,6 +106,7 @@ if True:
 
     P_sun = np.zeros(steps-1)
     P_alb = np.zeros(steps-1)
+    P_tot = np.zeros(steps-1)
     
     
     
@@ -126,7 +127,7 @@ if True:
         ax.set_ylabel('y')
         ax.set_zlabel('z')
         
-        
+        # frame1.rotate(angle_step,0,0,cor=frame1.origin())
         
         # Transforming cubesat
         cubesat.rotate(angle_step,0,0,cor=list(cubesat.find_cuboid_centroid()))
@@ -185,6 +186,8 @@ if True:
             * solar_flux * n_cell * n_packing \
             * (1 - degradation * years_elapsed)    
         
+        P_tot[i-1] = P_sun[i-1] + P_alb[i-1]
+        
         
         
         
@@ -201,7 +204,7 @@ if True:
         # Plot tripod of frame1:
         if not shadow:
             plot_frame(ax, frame1, tripod_scale=plotscale/8,
-                       perpfill=False, perpscale=0.1, 
+                       perpfill=True, perpscale=0.1, 
                        illumination=True, ill_plane='xz',
                        facecolour="#0F0F0F", facealpha=0.7
                        )
@@ -285,8 +288,9 @@ def plot_power(P_sun: list, P_alb: list):
     plt.text(33,9.1,"P_sun:       {} W".format(round(P_sun_avg,2)), color='k')
     plt.text(33,8.8,"P_albedo:    {} W".format(round(P_alb_avg,2)), color='k')
     plt.text(33,8.5,"P_alb/P_tot: {} %".format(round(P_alb_avg/P_tot_avg*100,1)), 
-             color='k')
+              color='k')
     
     plt.legend()
+    
     # Average area plot
     # plt.plot([0, len(A_ill)], [A_avg, A_avg], 'r:')
