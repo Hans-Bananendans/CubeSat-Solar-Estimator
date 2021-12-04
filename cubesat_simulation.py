@@ -7,7 +7,7 @@ Created on Mon May  3 08:57:58 2021
 """
 
 import numpy as np
-from numpy import sin, cos
+#from numpy import sin, cos
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import mpl_toolkits.mplot3d as mp3d
@@ -15,7 +15,7 @@ import mpl_toolkits.mplot3d as mp3d
 from cp_vertex import Vertex
 from cp_face import Face
 from cp_geometry import Geometry
-from cp_vector import Vector
+#from cp_vector import Vector
 from cp_frame import Frame
 from cp_utilities import d2r#, r2d
 from cp_plotting import plot_global_tripod, plot_frame,\
@@ -48,7 +48,12 @@ if True:
     
     # Define how many steps the simulation/animation will have:
     # High values give a more granular curve, but it takes longer to compute
+    global steps 
     steps = 64
+    # steps is a global variable, so we can access it outside the update()
+    #   function. It should be noted that relying on global variables is
+    #   bad practice, but I'm an adult and I'll do what I like!
+    
     # Defining an angle step that ensures the CubeSat model rotates completely,
     #   but only once.
     angle_step = d2r(360/steps)
@@ -70,12 +75,17 @@ if True:
     
     # Assembling the side panels of the Cubesat. Note that the order in which
     #   the points is specified DOES matter! (see definition of Face class)
-    fA = Face(p4, p3, p2, p1)
-    fB = Face(p2, p3, p7, p6)
-    fC = Face(p3, p4, p8, p7)
-    fD = Face(p4, p1, p5, p8)
-    fE = Face(p1, p2, p6, p5)
-    fF = Face(p5, p6, p7, p8)
+    
+                                #         ^ Z
+                                #         | 
+    fA = Face(p4, p3, p2, p1)   #     E  ___  
+    fB = Face(p2, p3, p7, p6)   #       |\ B_\  
+    fC = Face(p3, p4, p8, p7)   #     A | |  | F        Y
+    fD = Face(p4, p1, p5, p8)   #       | | C|  -------->
+    fE = Face(p1, p2, p6, p5)   #        \|__|
+    fF = Face(p5, p6, p7, p8)   #          D       
+                                #            \
+                                #             v X
     
     # Assembling a Geometry instance named 'cubesat', and add all the faces
     #   we just defined to the geometry.
@@ -143,7 +153,8 @@ if True:
   
     """ =========================== FAKE EARTH ========================= """
     # In this code segment, we create a small Geometry which will represent 
-    #   the Earth. This is purely for visualization purposes. In the plot, we
+    #   the Earth. This is both for visualization purposes, but also to
+    #   calculate the light coming in from the albedo effect. In the plot, we
     #   will focus on the satellite, and have the Earth "rotate" around the 
     #   satellite, rather than the other way around. This may look a bit
     #   strange at first, but it will make the plot look neater (the projected
@@ -210,7 +221,6 @@ if True:
         #   rendering overtop one another in the plot window.
         ax.clear()
         
-        
         # Set the scale of the plot with a sizing factor.
         plotscale = 0.5
         # Set the limits of the X/Y/Z axes of the plot. You can change these,
@@ -229,11 +239,14 @@ if True:
         # We could rotate the whole CubeSate by rotating its parent frame
         #   'frame1'. You would do this like so:
         # frame1.rotate(angle_step,0,0,cor=frame1.origin())
+        # This is bad, because it forces us to define the rotations of the 
+        #   CubeSat in terms of the global frame of reference. This is hard.
         
         # However, instead we will merely rotate the 'cubesat' Geometry and
-        #   keep 'frame1' stationary. Note that we rotate by angle_step each
-        #   time the function updates, and that we rotate 'cubesat' around
-        #   the CubeSat centroid.
+        #   keep 'frame1' stationary. This way, we can define the rototations
+        #   of the CubeSat in terms of the local frame 'frame1'.
+        # Note that we rotate by angle_step each time the function updates, 
+        #   and that we rotate 'cubesat' around the CubeSat centroid.
         
         cubesat.rotate(angle_step,0,0,cor=list(cubesat.find_cuboid_centroid()))
         
@@ -288,10 +301,8 @@ if True:
             else:
                 shadow = False
         
-        # A_ill array is global, so we can access it outside the update()
-        #   function. It should be noted that relying on global variables is
-        #   bad practice, but I'm an adult and I'll do what I like!
-        global A_ill
+        # Unnecessary but I'm keeping it here just in case
+#        global A_ill
         
         # If the CubeSat is not in the Earth's shadow, calculate the 
         #   illuminated area (from sun) and the area subjected to albedo.
@@ -366,6 +377,13 @@ if True:
         ax.set_title("3D Visualization.    Frame: {}.    A_ill = {} m^2.    Shadow is {}.\
                      ".format(str(i), str(A_ill[i-1]), shadow))
     
+        
+        # If simulation is at the final step, plot the power curve:
+        if i == steps-1:
+            print("Function update() is done! Plotting power curves...")
+            
+            # Call power curve plotting function
+            plot_power(P_sun, P_alb)
     
     """ =================== CALL THE ANIMATION FUNCTION =================== """  
     ani = animation.FuncAnimation(fig, update, np.arange(1,steps), 
@@ -378,7 +396,7 @@ if True:
 # Call this after the simulation has gone through all its steps
 
 def plot_power(P_sun: list, P_alb: list):
-    # P_tot list:
+    # P_tot list (we calculate it again to minimize input arguments):
     P_tot = [P_sun[i]+P_alb[i] for i in range(len(P_sun))]
     
     # Calculate average powers
@@ -386,11 +404,11 @@ def plot_power(P_sun: list, P_alb: list):
     P_alb_avg = round(sum(P_alb)/len(P_alb), 4)
     P_tot_avg = P_sun_avg + P_alb_avg
     
-    print(" P_sun: ",round(P_sun_avg,2),"W \n",
+    print("P_sun: ",round(P_sun_avg,2),"W \n",
           "P_alb: ",round(P_alb_avg,2),"W \n",
           "P_tot: ",round(P_tot_avg,2),"W \n",
           "P_alb/P_tot: ", round(P_alb_avg/P_tot_avg*100,1),"% ")
-           
+    
     # Set up plot
     fig_tmp = plt.figure(figsize=(10, 7))
     ax_tmp = fig_tmp.add_subplot(111)
@@ -398,7 +416,7 @@ def plot_power(P_sun: list, P_alb: list):
     plt.title("Illuminated CubeSat power during simulation.")
     plt.xlabel("Time [min]")
     plt.ylabel("Power [W]")    
-    # plt.text(0,0.035,"Average area: {} m^2".format(A_avg), color='r')
+    
     # Area progression plot
     plt.plot(range(len(P_sun)), P_sun, 'r', label="P_sun")
     plt.plot(range(len(P_alb)), P_alb, 'b', label="P_albedo")
