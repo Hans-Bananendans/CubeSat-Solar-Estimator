@@ -39,7 +39,8 @@ if True:
     
     # Setting up the plot:
     fig = plt.figure(figsize=(10, 7))
-    ax = mp3d.Axes3D(fig)
+    ax = mp3d.Axes3D(fig, auto_add_to_figure=False)
+    fig.add_axes(ax)
     
     
     """========= TO CHANGE THE DEFAULT CAMERA VIEW, CHANGE THESE: ========="""
@@ -47,7 +48,7 @@ if True:
     
     # Define how many steps the simulation/animation will have:
     # High values give a more granular curve, but it takes longer to compute
-    steps = 16
+    steps = 64
     # Defining an angle step that ensures the CubeSat model rotates completely,
     #   but only once.
     angle_step = d2r(360/steps)
